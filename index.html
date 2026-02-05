@@ -465,6 +465,13 @@
 			/* ===================== */
 			/* RETRO SNAKE GAME     */
 			/* ===================== */
+			.snakeContainer {
+				display: grid;
+				grid-template-columns: 1fr 260px;
+				gap: 18px;
+				align-items: start;
+			}
+
 			.snakeMain {
 				background: var(--retroBg);
 				border: 4px solid var(--neonCyan);
@@ -580,6 +587,105 @@
 				pointer-events: none;
 			}
 
+			/* Snake Sidebar */
+			.snakeSidebar {
+				background: rgba(0, 0, 0, 0.5);
+				border: 3px solid var(--neonPink);
+				border-radius: 14px;
+				padding: 14px;
+				box-shadow: 0 0 14px rgba(255, 110, 199, 0.2);
+			}
+
+			.snakeSidebarTitle {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 12px;
+				text-align: center;
+				margin: 0 0 10px;
+				color: var(--neonPink);
+				text-shadow: 0 0 6px var(--neonPink);
+			}
+
+			.snakeLeaderboard {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				max-height: 220px;
+				overflow-y: auto;
+			}
+
+			.snakeLeaderboard li {
+				display: flex;
+				justify-content: space-between;
+				padding: 5px 4px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+				color: var(--muted);
+			}
+
+			.snakeLeaderboard li:nth-child(1) {
+				color: #ffd700;
+			}
+
+			.snakeLeaderboard li:nth-child(2) {
+				color: #c0c0c0;
+			}
+
+			.snakeLeaderboard li:nth-child(3) {
+				color: #cd7f32;
+			}
+
+			.snakeLeaderboard .rank {
+				width: 22px;
+			}
+
+			.snakeLeaderboard .name {
+				flex: 1;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				padding: 0 6px;
+			}
+
+			.snakeLeaderboard .score {
+				width: 50px;
+				text-align: right;
+			}
+
+			.snakeUserWrap {
+				margin-top: 14px;
+				display: grid;
+				gap: 8px;
+			}
+
+			.snakeUserLabel {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				color: var(--neonCyan);
+			}
+
+			.snakeUserInput {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 10px;
+				padding: 8px;
+				border: 2px solid var(--neonCyan);
+				border-radius: 8px;
+				background: rgba(0, 0, 0, 0.4);
+				color: var(--text);
+				outline: none;
+			}
+
+			.snakeUserInput:focus {
+				box-shadow: 0 0 8px var(--neonCyan);
+			}
+
+			.snakeUserStats {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				color: var(--muted);
+				text-align: center;
+			}
+
 			/* Tabs */
 			.tabs {
 				display: flex;
@@ -622,7 +728,8 @@
 			}
 
 			@media (max-width: 760px) {
-				.tttContainer {
+				.tttContainer,
+				.snakeContainer {
 					grid-template-columns: 1fr;
 				}
 
@@ -713,10 +820,6 @@
 							<h2 class="tttTitle">TIC - TAC - TOE</h2>
 
 							<div class="tttControls">
-								<select class="select" id="tttMode" aria-label="Game mode">
-									<option value="ai">VS AI</option>
-									<option value="friend">VS FRIEND</option>
-								</select>
 								<select class="select" id="tttDifficulty" aria-label="AI Difficulty">
 									<option value="easy">EASY</option>
 									<option value="medium" selected>MEDIUM</option>
@@ -765,6 +868,7 @@
 
 						<aside class="tttSidebar">
 							<h3 class="tttSidebarTitle">LEADERBOARD</h3>
+							<p class="tttUserStats" style="margin-bottom:6px;color:var(--neonGreen);" id="tttLeaderboardMode">EASY MODE</p>
 							<ul class="tttLeaderboard" id="tttLeaderboard">
 								<li><span class="rank">—</span><span class="name">No data yet</span><span class="wins"></span></li>
 							</ul>
@@ -772,7 +876,7 @@
 							<div class="tttUserWrap">
 								<label class="tttUserLabel" for="tttUsername">YOUR NAME</label>
 								<input class="tttUserInput" type="text" id="tttUsername" maxlength="12" placeholder="Enter name…" />
-								<p class="tttUserStats" id="tttUserStats">Wins: 0</p>
+								<p class="tttUserStats" id="tttUserStats">EASY: 0 | MED: 0 | HARD: 0</p>
 							</div>
 						</aside>
 					</div>
@@ -780,34 +884,49 @@
 
 				<!-- Snake Game Panel -->
 				<div class="gamePanel" id="snakePanel" data-game="snake">
-					<div class="snakeMain">
-						<h2 class="snakeTitle">S N A K E</h2>
+					<div class="snakeContainer">
+						<div class="snakeMain">
+							<h2 class="snakeTitle">S N A K E</h2>
 
-						<div class="snakeControls">
-							<select class="select" id="snakeSpeed" aria-label="Snake speed">
-								<option value="slow">SLOW</option>
-								<option value="normal" selected>NORMAL</option>
-								<option value="fast">FAST</option>
-							</select>
-							<button class="button" id="snakeToggle" type="button">START</button>
-							<button class="button" id="snakeReset" type="button">NEW GAME</button>
-						</div>
+							<div class="snakeControls">
+								<select class="select" id="snakeSpeed" aria-label="Snake speed">
+									<option value="slow">SLOW</option>
+									<option value="normal" selected>NORMAL</option>
+									<option value="fast">FAST</option>
+								</select>
+								<button class="button" id="snakeToggle" type="button">START</button>
+								<button class="button" id="snakeReset" type="button">NEW GAME</button>
+							</div>
 
-						<p class="snakeStatus" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
-						<p class="snakeStats" id="snakeStats">SCORE: 0 • HIGH: 0</p>
+							<p class="snakeStatus" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
+							<p class="snakeStats" id="snakeStats">SCORE: 0 • HIGH: 0</p>
 
-						<div class="snakeWrap">
-							<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
-							<p class="snakeHelp">ARROW KEYS / WASD TO PLAY</p>
-							<div class="dpad" aria-label="Snake controls">
-								<button class="button blank" type="button" aria-hidden="true">.</button>
-								<button class="button" type="button" data-sdir="up">▲</button>
-								<button class="button blank" type="button" aria-hidden="true">.</button>
-								<button class="button" type="button" data-sdir="left">◀</button>
-								<button class="button" type="button" data-sdir="down">▼</button>
-								<button class="button" type="button" data-sdir="right">▶</button>
+							<div class="snakeWrap">
+								<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
+								<p class="snakeHelp">ARROW KEYS / WASD TO PLAY</p>
+								<div class="dpad" aria-label="Snake controls">
+									<button class="button blank" type="button" aria-hidden="true">.</button>
+									<button class="button" type="button" data-sdir="up">▲</button>
+									<button class="button blank" type="button" aria-hidden="true">.</button>
+									<button class="button" type="button" data-sdir="left">◀</button>
+									<button class="button" type="button" data-sdir="down">▼</button>
+									<button class="button" type="button" data-sdir="right">▶</button>
+								</div>
 							</div>
 						</div>
+
+						<aside class="snakeSidebar">
+							<h3 class="snakeSidebarTitle">HIGH SCORES</h3>
+							<ul class="snakeLeaderboard" id="snakeLeaderboard">
+								<li><span class="rank">—</span><span class="name">No data yet</span><span class="score"></span></li>
+							</ul>
+
+							<div class="snakeUserWrap">
+								<label class="snakeUserLabel" for="snakeUsername">YOUR NAME</label>
+								<input class="snakeUserInput" type="text" id="snakeUsername" maxlength="12" placeholder="Enter name…" />
+								<p class="snakeUserStats" id="snakeUserStats">Best: 0</p>
+							</div>
+						</aside>
 					</div>
 				</div>
 			</section>
@@ -907,16 +1026,17 @@
 				// ===================
 				// Leaderboard Storage (24h expiry)
 				// ===================
-				const LEADERBOARD_KEY = "tttLeaderboard";
 				const LEADERBOARD_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-				function getLeaderboard() {
+				// TTT Leaderboard - per difficulty
+				function getTttLeaderboard(difficulty) {
 					try {
-						const raw = localStorage.getItem(LEADERBOARD_KEY);
+						const key = `tttLeaderboard_${difficulty}`;
+						const raw = localStorage.getItem(key);
 						if (!raw) return [];
 						const data = JSON.parse(raw);
 						if (Date.now() > data.expiry) {
-							localStorage.removeItem(LEADERBOARD_KEY);
+							localStorage.removeItem(key);
 							return [];
 						}
 						return Array.isArray(data.entries) ? data.entries : [];
@@ -925,18 +1045,19 @@
 					}
 				}
 
-				function saveLeaderboard(entries) {
+				function saveTttLeaderboard(difficulty, entries) {
+					const key = `tttLeaderboard_${difficulty}`;
 					const data = {
 						expiry: Date.now() + LEADERBOARD_EXPIRY_MS,
 						entries: entries.slice(0, 20),
 					};
-					localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(data));
+					localStorage.setItem(key, JSON.stringify(data));
 				}
 
-				function addWinToLeaderboard(name) {
+				function addTttWin(name, difficulty) {
 					if (!name || !name.trim()) return;
 					const cleanName = name.trim().substring(0, 12);
-					const entries = getLeaderboard();
+					const entries = getTttLeaderboard(difficulty);
 					const existing = entries.find((e) => e.name.toLowerCase() === cleanName.toLowerCase());
 					if (existing) {
 						existing.wins += 1;
@@ -945,15 +1066,64 @@
 						entries.push({ name: cleanName, wins: 1 });
 					}
 					entries.sort((a, b) => b.wins - a.wins);
-					saveLeaderboard(entries);
+					saveTttLeaderboard(difficulty, entries);
 				}
 
-				function getUserWins(name) {
+				function getUserTttWins(name, difficulty) {
 					if (!name || !name.trim()) return 0;
 					const cleanName = name.trim().toLowerCase();
-					const entries = getLeaderboard();
+					const entries = getTttLeaderboard(difficulty);
 					const entry = entries.find((e) => e.name.toLowerCase() === cleanName);
 					return entry ? entry.wins : 0;
+				}
+
+				// Snake Leaderboard - high scores
+				function getSnakeLeaderboard() {
+					try {
+						const raw = localStorage.getItem("snakeLeaderboard");
+						if (!raw) return [];
+						const data = JSON.parse(raw);
+						if (Date.now() > data.expiry) {
+							localStorage.removeItem("snakeLeaderboard");
+							return [];
+						}
+						return Array.isArray(data.entries) ? data.entries : [];
+					} catch {
+						return [];
+					}
+				}
+
+				function saveSnakeLeaderboard(entries) {
+					const data = {
+						expiry: Date.now() + LEADERBOARD_EXPIRY_MS,
+						entries: entries.slice(0, 20),
+					};
+					localStorage.setItem("snakeLeaderboard", JSON.stringify(data));
+				}
+
+				function addSnakeScore(name, score) {
+					if (!name || !name.trim() || score <= 0) return;
+					const cleanName = name.trim().substring(0, 12);
+					const entries = getSnakeLeaderboard();
+					const existing = entries.find((e) => e.name.toLowerCase() === cleanName.toLowerCase());
+					if (existing) {
+						if (score > existing.score) {
+							existing.score = score;
+							existing.name = cleanName;
+						}
+					} else {
+						entries.push({ name: cleanName, score: score });
+					}
+					entries.sort((a, b) => b.score - a.score);
+					saveSnakeLeaderboard(entries);
+				}
+
+				function getUserSnakeBest(name) {
+					if (!name || !name.trim()) return 0;
+					const cleanName = name.trim().toLowerCase();
+					const entries = getSnakeLeaderboard();
+					const entry = entries.find((e) => e.name.toLowerCase() === cleanName);
+					return entry ? entry.score : 0;
 				}
 
 				// ===================
@@ -963,7 +1133,6 @@
 				const BOT = "O";
 				const COLS = ["A", "B", "C"];
 
-				const tttModeEl = document.getElementById("tttMode");
 				const tttDifficultyEl = document.getElementById("tttDifficulty");
 				const tttResetEl = document.getElementById("tttReset");
 				const tttStatusEl = document.getElementById("tttStatus");
@@ -972,6 +1141,7 @@
 				const tttMovesXEl = document.getElementById("tttMovesX");
 				const tttMovesOEl = document.getElementById("tttMovesO");
 				const tttLeaderboardEl = document.getElementById("tttLeaderboard");
+				const tttLeaderboardModeEl = document.getElementById("tttLeaderboardMode");
 				const tttUsernameEl = document.getElementById("tttUsername");
 				const tttUserStatsEl = document.getElementById("tttUserStats");
 
@@ -999,10 +1169,6 @@
 					return `${col}${row}`;
 				}
 
-				function getMode() {
-					return tttModeEl.value === "friend" ? "friend" : "ai";
-				}
-
 				function getDifficulty() {
 					return String(tttDifficultyEl.value || "medium").toLowerCase();
 				}
@@ -1016,8 +1182,11 @@
 					tttMovesOEl.innerHTML = tttMovesO.map((m) => `<li>${m}</li>`).join("");
 				}
 
-				function renderLeaderboard() {
-					const entries = getLeaderboard();
+				function renderTttLeaderboard() {
+					const diff = getDifficulty();
+					const diffLabel = diff.toUpperCase();
+					tttLeaderboardModeEl.textContent = `${diffLabel} MODE`;
+					const entries = getTttLeaderboard(diff);
 					if (entries.length === 0) {
 						tttLeaderboardEl.innerHTML = `<li><span class="rank">—</span><span class="name">No data yet</span><span class="wins"></span></li>`;
 						return;
@@ -1028,10 +1197,12 @@
 						.join("");
 				}
 
-				function updateUserStats() {
+				function updateTttUserStats() {
 					const name = tttUsernameEl.value;
-					const wins = getUserWins(name);
-					tttUserStatsEl.textContent = `Wins: ${wins}`;
+					const easyWins = getUserTttWins(name, "easy");
+					const medWins = getUserTttWins(name, "medium");
+					const hardWins = getUserTttWins(name, "hard");
+					tttUserStatsEl.textContent = `EASY: ${easyWins} | MED: ${medWins} | HARD: ${hardWins}`;
 				}
 
 				function getAvailableMoves(board) {
@@ -1068,9 +1239,6 @@
 				}
 
 				function render() {
-					const mode = getMode();
-					tttDifficultyEl.style.display = mode === "ai" ? "" : "none";
-
 					for (let i = 0; i < tttCellEls.length; i++) {
 						const value = tttBoard[i];
 						tttCellEls[i].textContent = value ? value : "";
@@ -1089,12 +1257,13 @@
 					setTttStatus(message);
 					render();
 
-					if (winner === HUMAN && getMode() === "ai") {
+					if (winner === HUMAN) {
 						const name = tttUsernameEl.value;
+						const diff = getDifficulty();
 						if (name && name.trim()) {
-							addWinToLeaderboard(name);
-							renderLeaderboard();
-							updateUserStats();
+							addTttWin(name, diff);
+							renderTttLeaderboard();
+							updateTttUserStats();
 						}
 					}
 
@@ -1118,16 +1287,13 @@
 
 				function maybeFinish() {
 					const { winner, line } = getWinner(tttBoard);
-					const mode = getMode();
 
 					if (winner === HUMAN) {
-						const msg = mode === "ai" ? "PLAYER 1 WINS!" : "X WINS!";
-						endGame(msg, line, HUMAN);
+						endGame("YOU WIN!", line, HUMAN);
 						return true;
 					}
 					if (winner === BOT) {
-						const msg = mode === "ai" ? "BOT WINS!" : "O WINS!";
-						endGame(msg, line, BOT);
+						endGame("BOT WINS!", line, BOT);
 						return true;
 					}
 					if (isDraw(tttBoard)) {
@@ -1244,13 +1410,9 @@
 					tttMovesX = [];
 					tttMovesO = [];
 					clearWinHighlight();
-
-					const mode = getMode();
-					if (mode === "ai") {
-						setTttStatus("YOUR TURN (X) - VS AI");
-					} else {
-						setTttStatus("X's TURN - VS FRIEND");
-					}
+					const diffLabel = getDifficulty().toUpperCase();
+					setTttStatus(`YOUR TURN (X) - ${diffLabel}`);
+					renderTttLeaderboard();
 					render();
 				}
 
@@ -1263,36 +1425,26 @@
 					if (!Number.isFinite(index)) return;
 
 					if (tttGameOver || tttBotThinking) return;
-
-					const mode = getMode();
-
-					if (mode === "ai") {
-						if (tttCurrent !== HUMAN) return;
-						if (!makeMove(index, HUMAN)) return;
-						clearWinHighlight();
-						if (maybeFinish()) return;
-						tttCurrent = BOT;
-						botPlay();
-						render();
-					} else {
-						if (!makeMove(index, tttCurrent)) return;
-						clearWinHighlight();
-						if (maybeFinish()) return;
-						tttCurrent = tttCurrent === HUMAN ? BOT : HUMAN;
-						setTttStatus(`${tttCurrent}'s TURN - VS FRIEND`);
-						render();
-					}
+					if (tttCurrent !== HUMAN) return;
+					if (!makeMove(index, HUMAN)) return;
+					clearWinHighlight();
+					if (maybeFinish()) return;
+					tttCurrent = BOT;
+					botPlay();
+					render();
 				}
 
 				tttBoardEl.addEventListener("click", onCellClick);
 				tttResetEl.addEventListener("click", startTttGame);
-				tttModeEl.addEventListener("change", startTttGame);
-				tttDifficultyEl.addEventListener("change", startTttGame);
-				tttUsernameEl.addEventListener("input", updateUserStats);
+				tttDifficultyEl.addEventListener("change", () => {
+					renderTttLeaderboard();
+					startTttGame();
+				});
+				tttUsernameEl.addEventListener("input", updateTttUserStats);
 
 				// Load saved username
-				const savedName = localStorage.getItem("tttUsername") || "";
-				tttUsernameEl.value = savedName;
+				const savedTttName = localStorage.getItem("tttUsername") || "";
+				tttUsernameEl.value = savedTttName;
 				tttUsernameEl.addEventListener("change", () => {
 					localStorage.setItem("tttUsername", tttUsernameEl.value);
 				});
@@ -1306,8 +1458,8 @@
 					}
 				});
 
-				renderLeaderboard();
-				updateUserStats();
+				renderTttLeaderboard();
+				updateTttUserStats();
 				startTttGame();
 
 				// ===================
@@ -1320,6 +1472,9 @@
 				const snakeResetEl = document.getElementById("snakeReset");
 				const snakeStatusEl = document.getElementById("snakeStatus");
 				const snakeStatsEl = document.getElementById("snakeStats");
+				const snakeLeaderboardEl = document.getElementById("snakeLeaderboard");
+				const snakeUsernameEl = document.getElementById("snakeUsername");
+				const snakeUserStatsEl = document.getElementById("snakeUserStats");
 
 				const GRID = 20;
 				const CELL = Math.floor(snakeCanvas.width / GRID);
@@ -1340,6 +1495,24 @@
 
 				function updateSnakeStats() {
 					snakeStatsEl.textContent = `SCORE: ${snakeScore} • HIGH: ${snakeHigh}`;
+				}
+
+				function renderSnakeLeaderboard() {
+					const entries = getSnakeLeaderboard();
+					if (entries.length === 0) {
+						snakeLeaderboardEl.innerHTML = `<li><span class="rank">—</span><span class="name">No data yet</span><span class="score"></span></li>`;
+						return;
+					}
+					snakeLeaderboardEl.innerHTML = entries
+						.slice(0, 10)
+						.map((e, i) => `<li><span class="rank">${i + 1}.</span><span class="name">${e.name}</span><span class="score">${e.score}</span></li>`)
+						.join("");
+				}
+
+				function updateSnakeUserStats() {
+					const name = snakeUsernameEl.value;
+					const best = getUserSnakeBest(name);
+					snakeUserStatsEl.textContent = `Best: ${best}`;
 				}
 
 				function snakeSpeedMs() {
@@ -1472,6 +1645,13 @@
 					snakeAlive = false;
 					snakePause();
 					setSnakeStatus("Game over. Press New to try again.");
+					// Save score to leaderboard
+					const name = snakeUsernameEl.value;
+					if (name && name.trim() && snakeScore > 0) {
+						addSnakeScore(name, snakeScore);
+						renderSnakeLeaderboard();
+						updateSnakeUserStats();
+					}
 				}
 
 				function snakePlay() {
@@ -1530,6 +1710,25 @@
 					});
 				}
 
+				// Load saved snake username
+				const savedSnakeName = localStorage.getItem("snakeUsername") || "";
+				snakeUsernameEl.value = savedSnakeName;
+				snakeUsernameEl.addEventListener("change", () => {
+					localStorage.setItem("snakeUsername", snakeUsernameEl.value);
+				});
+				snakeUsernameEl.addEventListener("input", updateSnakeUserStats);
+				// Press Enter on snake username to start game
+				snakeUsernameEl.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						localStorage.setItem("snakeUsername", snakeUsernameEl.value);
+						snakeReset(true);
+						snakeUsernameEl.blur();
+					}
+				});
+
+				renderSnakeLeaderboard();
+				updateSnakeUserStats();
 				snakeReset(false);
 			})();
 		</script>
