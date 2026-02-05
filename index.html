@@ -136,6 +136,112 @@
 				font-weight: 600;
 			}
 
+			.divider {
+				margin: 22px 0;
+				border: none;
+				height: 1px;
+				background: linear-gradient(
+					90deg,
+					transparent,
+					rgba(255, 255, 255, 0.18),
+					transparent
+				);
+			}
+
+			.grid {
+				display: grid;
+				gap: 12px;
+			}
+
+			.gameHeader {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 12px;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px;
+				align-items: center;
+			}
+
+			.select,
+			.button {
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--text);
+				border-radius: 12px;
+				padding: 10px 12px;
+				font: inherit;
+				outline: none;
+			}
+
+			.select {
+				padding-right: 34px;
+			}
+
+			.button {
+				cursor: pointer;
+				transition: transform 120ms ease, background 120ms ease;
+			}
+
+			.button:active {
+				transform: translateY(1px);
+			}
+
+			.help {
+				color: var(--muted);
+				font-size: 13px;
+				margin: 0;
+			}
+
+			.board {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: 10px;
+				max-width: 360px;
+			}
+
+			.cell {
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(0, 0, 0, 0.18);
+				border-radius: 16px;
+				height: 96px;
+				cursor: pointer;
+				color: var(--text);
+				font-size: 44px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				font-variant-numeric: tabular-nums;
+				transition: transform 120ms ease, border-color 120ms ease,
+					background 120ms ease;
+			}
+
+			.cell:hover {
+				transform: translateY(-1px);
+				border-color: rgba(255, 255, 255, 0.22);
+			}
+
+			.cell:disabled {
+				cursor: not-allowed;
+				opacity: 0.75;
+			}
+
+			.cell.win {
+				border-color: rgba(34, 211, 238, 0.5);
+				background: rgba(34, 211, 238, 0.08);
+			}
+
+			.status {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+
 			@media (max-width: 560px) {
 				.hero {
 					padding: 20px;
@@ -143,6 +249,11 @@
 
 				.countdown {
 					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+
+				.cell {
+					height: 84px;
+					font-size: 40px;
 				}
 			}
 		</style>
@@ -158,7 +269,7 @@
 				<h1 id="title">Ashish's Portfolio</h1>
 				<p class="sub">
 					I’m building this space to showcase my projects, experience, and writing.
-					It’ll be live at the end of next month.
+					It’ll be live at the end of next month.	
 				</p>
 
 				<div class="launch">
@@ -183,6 +294,41 @@
 							<div class="num" id="seconds">—</div>
 							<div class="label">Seconds</div>
 						</div>
+					</div>
+				</div>
+
+				<hr class="divider" />
+
+				<div class="grid" aria-labelledby="gameTitle">
+					<div class="gameHeader">
+						<div>
+							<h2 id="gameTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Tic‑Tac‑Toe</h2>
+							<p class="help">Play against the bot while the portfolio is cooking.</p>
+						</div>
+
+						<div class="controls">
+							<label class="help" for="difficulty" style="margin-right: 2px;">Difficulty</label>
+							<select class="select" id="difficulty" aria-label="Select difficulty">
+								<option value="easy">Easy</option>
+								<option value="medium" selected>Medium</option>
+								<option value="hard">Hard</option>
+							</select>
+							<button class="button" id="reset" type="button">New game</button>
+						</div>
+					</div>
+
+					<p class="status" id="status" aria-live="polite" aria-atomic="true">Loading…</p>
+
+					<div class="board" id="board" role="grid" aria-label="Tic tac toe board">
+						<button class="cell" type="button" data-index="0" aria-label="Cell 1"></button>
+						<button class="cell" type="button" data-index="1" aria-label="Cell 2"></button>
+						<button class="cell" type="button" data-index="2" aria-label="Cell 3"></button>
+						<button class="cell" type="button" data-index="3" aria-label="Cell 4"></button>
+						<button class="cell" type="button" data-index="4" aria-label="Cell 5"></button>
+						<button class="cell" type="button" data-index="5" aria-label="Cell 6"></button>
+						<button class="cell" type="button" data-index="6" aria-label="Cell 7"></button>
+						<button class="cell" type="button" data-index="7" aria-label="Cell 8"></button>
+						<button class="cell" type="button" data-index="8" aria-label="Cell 9"></button>
 					</div>
 				</div>
 			</section>
@@ -253,6 +399,250 @@
 
 				tick();
 				const timer = setInterval(tick, 1000);
+
+				// -----------------
+				// Tic-Tac-Toe game
+				// -----------------
+				const HUMAN = "X";
+				const BOT = "O";
+
+				const difficultyEl = document.getElementById("difficulty");
+				const resetEl = document.getElementById("reset");
+				const statusEl = document.getElementById("status");
+				const boardEl = document.getElementById("board");
+				const cellEls = Array.from(boardEl.querySelectorAll(".cell"));
+
+				const WIN_LINES = [
+					[0, 1, 2],
+					[3, 4, 5],
+					[6, 7, 8],
+					[0, 3, 6],
+					[1, 4, 7],
+					[2, 5, 8],
+					[0, 4, 8],
+					[2, 4, 6],
+				];
+
+				let board = new Array(9).fill(null);
+				let current = HUMAN;
+				let gameOver = false;
+				let botThinking = false;
+
+				function getAvailableMoves(nextBoard) {
+					const moves = [];
+					for (let index = 0; index < nextBoard.length; index++) {
+						if (nextBoard[index] === null) moves.push(index);
+					}
+					return moves;
+				}
+
+				function getWinner(nextBoard) {
+					for (const line of WIN_LINES) {
+						const [a, b, c] = line;
+						if (nextBoard[a] && nextBoard[a] === nextBoard[b] && nextBoard[a] === nextBoard[c]) {
+							return { winner: nextBoard[a], line };
+						}
+					}
+					return { winner: null, line: null };
+				}
+
+				function isDraw(nextBoard) {
+					return nextBoard.every((cell) => cell !== null) && getWinner(nextBoard).winner === null;
+				}
+
+				function setStatus(text) {
+					statusEl.textContent = text;
+				}
+
+				function clearWinHighlight() {
+					for (const cellEl of cellEls) cellEl.classList.remove("win");
+				}
+
+				function highlightWinLine(line) {
+					if (!line) return;
+					for (const index of line) {
+						cellEls[index].classList.add("win");
+					}
+				}
+
+				function render() {
+					for (let index = 0; index < cellEls.length; index++) {
+						const value = board[index];
+						cellEls[index].textContent = value ? value : "";
+						cellEls[index].disabled = gameOver || botThinking || value !== null;
+					}
+				}
+
+				function endGame(message, winLine) {
+					gameOver = true;
+					botThinking = false;
+					clearWinHighlight();
+					highlightWinLine(winLine);
+					setStatus(message);
+					render();
+				}
+
+				function makeMove(index, player) {
+					if (board[index] !== null) return false;
+					board[index] = player;
+					return true;
+				}
+
+				function maybeFinish() {
+					const { winner, line } = getWinner(board);
+					if (winner === HUMAN) {
+						endGame("You win!", line);
+						return true;
+					}
+					if (winner === BOT) {
+						endGame("Bot wins.", line);
+						return true;
+					}
+					if (isDraw(board)) {
+						endGame("It’s a draw.", null);
+						return true;
+					}
+					return false;
+				}
+
+				function pickRandom(moves) {
+					return moves[Math.floor(Math.random() * moves.length)];
+				}
+
+				function findImmediateWinIndex(player) {
+					for (const move of getAvailableMoves(board)) {
+						const trial = board.slice();
+						trial[move] = player;
+						if (getWinner(trial).winner === player) return move;
+					}
+					return null;
+				}
+
+				function pickMoveEasy() {
+					const moves = getAvailableMoves(board);
+					return pickRandom(moves);
+				}
+
+				function pickMoveMedium() {
+					const winNow = findImmediateWinIndex(BOT);
+					if (winNow !== null) return winNow;
+					const blockNow = findImmediateWinIndex(HUMAN);
+					if (blockNow !== null) return blockNow;
+
+					if (board[4] === null) return 4;
+
+					const corners = [0, 2, 6, 8].filter((index) => board[index] === null);
+					if (corners.length) return pickRandom(corners);
+
+					return pickMoveEasy();
+				}
+
+				function minimax(nextBoard, depth, isMaximizing) {
+					const { winner } = getWinner(nextBoard);
+					if (winner === BOT) return 10 - depth;
+					if (winner === HUMAN) return -10 + depth;
+					if (nextBoard.every((cell) => cell !== null)) return 0;
+
+					const moves = getAvailableMoves(nextBoard);
+					if (isMaximizing) {
+						let bestScore = -Infinity;
+						for (const move of moves) {
+							const trial = nextBoard.slice();
+							trial[move] = BOT;
+							bestScore = Math.max(bestScore, minimax(trial, depth + 1, false));
+						}
+						return bestScore;
+					}
+
+					let bestScore = Infinity;
+					for (const move of moves) {
+						const trial = nextBoard.slice();
+						trial[move] = HUMAN;
+						bestScore = Math.min(bestScore, minimax(trial, depth + 1, true));
+					}
+					return bestScore;
+				}
+
+				function pickMoveHard() {
+					const moves = getAvailableMoves(board);
+					let bestScore = -Infinity;
+					let bestMoves = [];
+
+					for (const move of moves) {
+						const trial = board.slice();
+						trial[move] = BOT;
+						const score = minimax(trial, 0, false);
+						if (score > bestScore) {
+							bestScore = score;
+							bestMoves = [move];
+						} else if (score === bestScore) {
+							bestMoves.push(move);
+						}
+					}
+
+					return pickRandom(bestMoves);
+				}
+
+				function pickBotMove() {
+					const difficulty = String(difficultyEl.value || "medium").toLowerCase();
+					if (difficulty === "easy") return pickMoveEasy();
+					if (difficulty === "hard") return pickMoveHard();
+					return pickMoveMedium();
+				}
+
+				function botPlay() {
+					if (gameOver) return;
+					if (current !== BOT) return;
+
+					botThinking = true;
+					setStatus("Bot is thinking…");
+					render();
+
+					window.setTimeout(() => {
+						const move = pickBotMove();
+						makeMove(move, BOT);
+						botThinking = false;
+						if (maybeFinish()) return;
+						current = HUMAN;
+						setStatus("Your turn (X).");
+						render();
+					}, 320);
+				}
+
+				function startGame() {
+					board = new Array(9).fill(null);
+					current = HUMAN;
+					gameOver = false;
+					botThinking = false;
+					clearWinHighlight();
+					setStatus("Your turn (X). Bot is O.");
+					render();
+				}
+
+				function onCellClick(event) {
+					const target = event.target;
+					if (!(target instanceof HTMLElement)) return;
+					const indexStr = target.getAttribute("data-index");
+					if (indexStr === null) return;
+					const index = Number(indexStr);
+					if (!Number.isFinite(index)) return;
+
+					if (gameOver || botThinking) return;
+					if (current !== HUMAN) return;
+					if (!makeMove(index, HUMAN)) return;
+
+					clearWinHighlight();
+					if (maybeFinish()) return;
+					current = BOT;
+					botPlay();
+					render();
+				}
+
+				boardEl.addEventListener("click", onCellClick);
+				resetEl.addEventListener("click", startGame);
+				difficultyEl.addEventListener("change", startGame);
+
+				startGame();
 			})();
 		</script>
 	</body>
