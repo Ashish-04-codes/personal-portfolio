@@ -1,0 +1,260 @@
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Personal portfolio — launching soon." />
+		<title>Ashish — Portfolio (Launching Soon)</title>
+		<style>
+			:root {
+				--bg0: #070a12;
+				--bg1: #0b1020;
+				--card: rgba(255, 255, 255, 0.06);
+				--cardBorder: rgba(255, 255, 255, 0.12);
+				--text: rgba(255, 255, 255, 0.92);
+				--muted: rgba(255, 255, 255, 0.7);
+				--accent: #7c5cff;
+				--accent2: #22d3ee;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+				color: var(--text);
+				font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+					Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+				background:
+					radial-gradient(900px 600px at 20% 10%, rgba(124, 92, 255, 0.32), transparent 55%),
+					radial-gradient(700px 500px at 85% 30%, rgba(34, 211, 238, 0.24), transparent 55%),
+					linear-gradient(180deg, var(--bg0), var(--bg1));
+				display: grid;
+				place-items: center;
+				padding: 28px;
+			}
+
+			.wrap {
+				width: min(980px, 100%);
+			}
+
+			.hero {
+				border: 1px solid var(--cardBorder);
+				background: var(--card);
+				backdrop-filter: blur(10px);
+				border-radius: 18px;
+				padding: 28px;
+				box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+			}
+
+			h1 {
+				margin: 0;
+				letter-spacing: -0.02em;
+				font-size: clamp(28px, 3.5vw, 44px);
+				line-height: 1.08;
+			}
+
+			.sub {
+				margin: 12px 0 0;
+				color: var(--muted);
+				font-size: 16px;
+				line-height: 1.6;
+				max-width: 70ch;
+			}
+
+			.launch {
+				margin-top: 22px;
+				display: grid;
+				gap: 14px;
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				width: fit-content;
+				padding: 8px 12px;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--muted);
+				font-size: 13px;
+			}
+
+			.dot {
+				width: 9px;
+				height: 9px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, var(--accent), var(--accent2));
+				box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.16);
+			}
+
+			.countdown {
+				display: grid;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+				gap: 12px;
+			}
+
+			.tile {
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.18);
+				border-radius: 14px;
+				padding: 14px;
+				text-align: center;
+			}
+
+			.num {
+				font-variant-numeric: tabular-nums;
+				letter-spacing: -0.02em;
+				font-size: clamp(26px, 4vw, 40px);
+				line-height: 1.1;
+			}
+
+			.label {
+				margin-top: 6px;
+				font-size: 12px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.12em;
+			}
+
+			.liveLine {
+				margin: 0;
+				color: var(--muted);
+				font-size: 14px;
+			}
+
+			.dateStrong {
+				color: var(--text);
+				font-weight: 600;
+			}
+
+			@media (max-width: 560px) {
+				.hero {
+					padding: 20px;
+				}
+
+				.countdown {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main class="wrap">
+			<section class="hero" aria-labelledby="title">
+				<div class="pill" aria-hidden="true">
+					<span class="dot"></span>
+					<span>Launching soon</span>
+				</div>
+
+				<h1 id="title">Ashish — Personal Portfolio</h1>
+				<p class="sub">
+					I’m building this space to showcase my projects, experience, and writing.
+					It’ll be live at the end of next month.
+				</p>
+
+				<div class="launch">
+					<p class="liveLine" id="launchLine">
+						This portfolio will be live on <span class="dateStrong" id="targetDate">—</span>.
+					</p>
+
+					<div class="countdown" aria-live="polite" aria-atomic="true">
+						<div class="tile">
+							<div class="num" id="days">—</div>
+							<div class="label">Days</div>
+						</div>
+						<div class="tile">
+							<div class="num" id="hours">—</div>
+							<div class="label">Hours</div>
+						</div>
+						<div class="tile">
+							<div class="num" id="minutes">—</div>
+							<div class="label">Minutes</div>
+						</div>
+						<div class="tile">
+							<div class="num" id="seconds">—</div>
+							<div class="label">Seconds</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script>
+			(function () {
+				const daysEl = document.getElementById("days");
+				const hoursEl = document.getElementById("hours");
+				const minutesEl = document.getElementById("minutes");
+				const secondsEl = document.getElementById("seconds");
+				const targetDateEl = document.getElementById("targetDate");
+				const launchLineEl = document.getElementById("launchLine");
+
+				function getEndOfNextMonth(now) {
+					return new Date(
+						now.getFullYear(),
+						now.getMonth() + 2,
+						0,
+						23,
+						59,
+						59,
+						999
+					);
+				}
+
+				const target = getEndOfNextMonth(new Date());
+
+				const formattedTarget = new Intl.DateTimeFormat(undefined, {
+					weekday: "long",
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+					hour: "2-digit",
+					minute: "2-digit",
+				}).format(target);
+				targetDateEl.textContent = formattedTarget;
+
+				function pad2(value) {
+					return String(value).padStart(2, "0");
+				}
+
+				function tick() {
+					const now = new Date();
+					const diffMs = target.getTime() - now.getTime();
+
+					if (diffMs <= 0) {
+						daysEl.textContent = "00";
+						hoursEl.textContent = "00";
+						minutesEl.textContent = "00";
+						secondsEl.textContent = "00";
+						launchLineEl.textContent = "This portfolio is live.";
+						clearInterval(timer);
+						return;
+					}
+
+					const totalSeconds = Math.floor(diffMs / 1000);
+					const days = Math.floor(totalSeconds / (60 * 60 * 24));
+					const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+					const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+					const seconds = totalSeconds % 60;
+
+					daysEl.textContent = pad2(days);
+					hoursEl.textContent = pad2(hours);
+					minutesEl.textContent = pad2(minutes);
+					secondsEl.textContent = pad2(seconds);
+				}
+
+				tick();
+				const timer = setInterval(tick, 1000);
+			})();
+		</script>
+	</body>
+</html>
+
