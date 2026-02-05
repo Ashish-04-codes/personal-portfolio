@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 	<head>
@@ -6,6 +5,9 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="description" content="Personal portfolio — launching soon." />
 		<title>Ashish — Portfolio (Launching Soon)</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet" />
 		<style>
 			:root {
 				--bg0: #070a12;
@@ -16,6 +18,11 @@
 				--muted: rgba(255, 255, 255, 0.7);
 				--accent: #7c5cff;
 				--accent2: #22d3ee;
+				--neonGreen: #39ff14;
+				--neonCyan: #22d3ee;
+				--neonPink: #ff6ec7;
+				--neonYellow: #ffe600;
+				--retroBg: #1a2332;
 			}
 
 			* {
@@ -153,21 +160,6 @@
 				gap: 12px;
 			}
 
-			.gameHeader {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 12px;
-				align-items: center;
-				justify-content: space-between;
-			}
-
-			.controls {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 10px;
-				align-items: center;
-			}
-
 			.select,
 			.button {
 				border: 1px solid rgba(255, 255, 255, 0.14);
@@ -177,10 +169,6 @@
 				padding: 10px 12px;
 				font: inherit;
 				outline: none;
-			}
-
-			.select {
-				padding-right: 34px;
 			}
 
 			.button {
@@ -198,42 +186,303 @@
 				margin: 0;
 			}
 
-			.board {
+			/* ===================== */
+			/* RETRO TIC-TAC-TOE     */
+			/* ===================== */
+			.tttContainer {
 				display: grid;
-				grid-template-columns: repeat(3, minmax(0, 1fr));
+				grid-template-columns: 1fr 260px;
+				gap: 18px;
+				align-items: start;
+			}
+
+			.tttMain {
+				background: var(--retroBg);
+				border: 4px solid var(--neonGreen);
+				border-radius: 18px;
+				padding: 18px;
+				box-shadow:
+					0 0 20px rgba(57, 255, 20, 0.25),
+					inset 0 0 40px rgba(0, 0, 0, 0.5);
+			}
+
+			.tttTitle {
+				font-family: 'Press Start 2P', monospace;
+				font-size: clamp(18px, 3vw, 28px);
+				text-align: center;
+				margin: 0 0 14px;
+				color: var(--neonGreen);
+				text-shadow:
+					0 0 8px var(--neonGreen),
+					0 0 20px var(--neonGreen);
+				letter-spacing: 0.12em;
+			}
+
+			.tttControls {
+				display: flex;
+				flex-wrap: wrap;
 				gap: 10px;
-				max-width: 360px;
+				align-items: center;
+				justify-content: center;
+				margin-bottom: 14px;
 			}
 
-			.cell {
+			.tttControls .select,
+			.tttControls .button {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 10px;
+				padding: 8px 10px;
+				border-color: var(--neonGreen);
+				background: rgba(57, 255, 20, 0.08);
+				color: var(--neonGreen);
+			}
+
+			.tttControls .button:hover {
+				background: rgba(57, 255, 20, 0.18);
+			}
+
+			.tttStatus {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 11px;
+				text-align: center;
+				margin: 0 0 10px;
+				color: var(--neonYellow);
+				text-shadow: 0 0 6px var(--neonYellow);
+				min-height: 32px;
+			}
+
+			.tttBoardWrap {
+				display: flex;
+				justify-content: center;
+			}
+
+			.tttBoard {
+				display: grid;
+				grid-template-columns: 40px repeat(3, 1fr);
+				grid-template-rows: 40px repeat(3, 1fr);
+				gap: 6px;
+				max-width: 340px;
+			}
+
+			.tttColLabel,
+			.tttRowLabel {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 14px;
+				color: var(--neonGreen);
+				display: grid;
+				place-items: center;
+				text-shadow: 0 0 6px var(--neonGreen);
+			}
+
+			.tttCorner {
+				/* empty top-left corner */
+			}
+
+			.tttCell {
 				appearance: none;
-				border: 1px solid rgba(255, 255, 255, 0.14);
-				background: rgba(0, 0, 0, 0.18);
-				border-radius: 16px;
-				height: 96px;
+				border: 3px dashed rgba(57, 255, 20, 0.5);
+				background: rgba(0, 0, 0, 0.4);
+				border-radius: 10px;
+				width: 90px;
+				height: 90px;
 				cursor: pointer;
-				color: var(--text);
-				font-size: 44px;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 48px;
 				font-weight: 700;
-				letter-spacing: -0.02em;
-				font-variant-numeric: tabular-nums;
-				transition: transform 120ms ease, border-color 120ms ease,
-					background 120ms ease;
+				color: var(--text);
+				transition: transform 100ms ease, border-color 100ms ease, background 100ms ease;
 			}
 
-			.cell:hover {
-				transform: translateY(-1px);
-				border-color: rgba(255, 255, 255, 0.22);
+			.tttCell:hover:not(:disabled) {
+				transform: scale(1.03);
+				border-color: var(--neonGreen);
+				background: rgba(57, 255, 20, 0.08);
 			}
 
-			.cell:disabled {
+			.tttCell:disabled {
 				cursor: not-allowed;
-				opacity: 0.75;
 			}
 
-			.cell.win {
-				border-color: rgba(34, 211, 238, 0.5);
-				background: rgba(34, 211, 238, 0.08);
+			.tttCell.X {
+				color: var(--neonCyan);
+				text-shadow: 0 0 12px var(--neonCyan);
+			}
+
+			.tttCell.O {
+				color: var(--neonPink);
+				text-shadow: 0 0 12px var(--neonPink);
+			}
+
+			.tttCell.win {
+				border-color: var(--neonYellow);
+				background: rgba(255, 230, 0, 0.12);
+				box-shadow: 0 0 16px rgba(255, 230, 0, 0.4);
+			}
+
+			.tttMoveHistory {
+				margin-top: 14px;
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+			}
+
+			.tttMoveCol {
+				background: rgba(0, 0, 0, 0.3);
+				border: 2px solid rgba(255, 255, 255, 0.15);
+				border-radius: 8px;
+				padding: 8px;
+			}
+
+			.tttMoveColTitle {
+				text-align: center;
+				margin-bottom: 6px;
+				padding-bottom: 4px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+			}
+
+			.tttMoveColTitle.X {
+				color: var(--neonCyan);
+			}
+
+			.tttMoveColTitle.O {
+				color: var(--neonPink);
+			}
+
+			.tttMoveList {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				max-height: 80px;
+				overflow-y: auto;
+			}
+
+			.tttMoveList li {
+				padding: 2px 0;
+				color: var(--muted);
+			}
+
+			/* Sidebar: Leaderboard */
+			.tttSidebar {
+				background: rgba(0, 0, 0, 0.5);
+				border: 3px solid var(--neonYellow);
+				border-radius: 14px;
+				padding: 14px;
+				box-shadow: 0 0 14px rgba(255, 230, 0, 0.2);
+			}
+
+			.tttSidebarTitle {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 12px;
+				text-align: center;
+				margin: 0 0 10px;
+				color: var(--neonYellow);
+				text-shadow: 0 0 6px var(--neonYellow);
+			}
+
+			.tttLeaderboard {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				max-height: 220px;
+				overflow-y: auto;
+			}
+
+			.tttLeaderboard li {
+				display: flex;
+				justify-content: space-between;
+				padding: 5px 4px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+				color: var(--muted);
+			}
+
+			.tttLeaderboard li:nth-child(1) {
+				color: #ffd700;
+			}
+
+			.tttLeaderboard li:nth-child(2) {
+				color: #c0c0c0;
+			}
+
+			.tttLeaderboard li:nth-child(3) {
+				color: #cd7f32;
+			}
+
+			.tttLeaderboard .rank {
+				width: 22px;
+			}
+
+			.tttLeaderboard .name {
+				flex: 1;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				padding: 0 6px;
+			}
+
+			.tttLeaderboard .wins {
+				width: 40px;
+				text-align: right;
+			}
+
+			.tttUserWrap {
+				margin-top: 14px;
+				display: grid;
+				gap: 8px;
+			}
+
+			.tttUserLabel {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				color: var(--neonGreen);
+			}
+
+			.tttUserInput {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 10px;
+				padding: 8px;
+				border: 2px solid var(--neonGreen);
+				border-radius: 8px;
+				background: rgba(0, 0, 0, 0.4);
+				color: var(--text);
+				outline: none;
+			}
+
+			.tttUserInput:focus {
+				box-shadow: 0 0 8px var(--neonGreen);
+			}
+
+			.tttUserStats {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				color: var(--muted);
+				text-align: center;
+			}
+
+			/* Snake game styles */
+			.gameCard {
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.14);
+				border-radius: 16px;
+				padding: 16px;
+			}
+
+			.gameHeader {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 12px;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px;
+				align-items: center;
 			}
 
 			.status {
@@ -242,98 +491,99 @@
 				font-size: 14px;
 			}
 
-			.memoryWrap {
+			.snakeWrap {
 				display: grid;
 				gap: 12px;
 			}
 
-			.memoryMeta {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 10px 14px;
-				align-items: center;
-				justify-content: space-between;
-			}
-
-			.stats {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 10px;
-				align-items: center;
-				color: var(--muted);
-				font-size: 13px;
-			}
-
-			.stat {
-				border: 1px solid rgba(255, 255, 255, 0.12);
-				background: rgba(0, 0, 0, 0.14);
-				border-radius: 999px;
-				padding: 8px 10px;
-				font-variant-numeric: tabular-nums;
-			}
-
-			.memoryBoard {
-				display: grid;
-				gap: 10px;
-				grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-				width: min(520px, 100%);
-			}
-
-			.card {
-				appearance: none;
+			.snakeCanvas {
+				width: 100%;
+				max-width: 360px;
+				aspect-ratio: 1 / 1;
+				border-radius: 16px;
 				border: 1px solid rgba(255, 255, 255, 0.14);
 				background: rgba(0, 0, 0, 0.18);
-				border-radius: 16px;
-				padding: 0;
-				cursor: pointer;
-				color: var(--text);
-				aspect-ratio: 1 / 1;
-				position: relative;
-				transform-style: preserve-3d;
-				transition: transform 240ms ease, border-color 120ms ease,
-					background 120ms ease;
+				display: block;
 			}
 
-			.card:hover {
-				transform: translateY(-1px);
+			.dpad {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 8px;
+				max-width: 240px;
+			}
+
+			.dpad .button {
+				padding: 10px 10px;
+				border-radius: 14px;
+			}
+
+			.dpad .blank {
+				opacity: 0;
+				pointer-events: none;
+			}
+
+			/* Tabs */
+			.tabs {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin: 0 0 12px;
+			}
+
+			.tabButton {
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--text);
+				border-radius: 999px;
+				padding: 8px 12px;
+				font: inherit;
+				cursor: pointer;
+				transition: transform 120ms ease, background 120ms ease,
+					border-color 120ms ease;
+			}
+
+			.tabButton:active {
+				transform: translateY(1px);
+			}
+
+			.tabButton[aria-pressed="true"] {
+				background: linear-gradient(
+					135deg,
+					rgba(124, 92, 255, 0.26),
+					rgba(34, 211, 238, 0.18)
+				);
 				border-color: rgba(255, 255, 255, 0.22);
 			}
 
-			.card:disabled {
-				cursor: not-allowed;
-				opacity: 0.8;
+			.gamePanel {
+				display: none;
 			}
 
-			.card.flipped {
-				transform: rotateY(180deg);
+			.gamePanel.active {
+				display: block;
 			}
 
-			.card.matched {
-				border-color: rgba(124, 92, 255, 0.5);
-				background: rgba(124, 92, 255, 0.08);
-			}
+			@media (max-width: 760px) {
+				.tttContainer {
+					grid-template-columns: 1fr;
+				}
 
-			.face {
-				position: absolute;
-				inset: 0;
-				border-radius: 16px;
-				display: grid;
-				place-items: center;
-				backface-visibility: hidden;
-			}
+				.tttCell {
+					width: 70px;
+					height: 70px;
+					font-size: 36px;
+				}
 
-			.face.back {
-				background:
-					radial-gradient(140px 120px at 30% 20%, rgba(124, 92, 255, 0.32), transparent 60%),
-					radial-gradient(140px 120px at 70% 80%, rgba(34, 211, 238, 0.22), transparent 60%),
-					rgba(255, 255, 255, 0.04);
-			}
+				.tttBoard {
+					grid-template-columns: 30px repeat(3, 1fr);
+					grid-template-rows: 30px repeat(3, 1fr);
+				}
 
-			.face.front {
-				transform: rotateY(180deg);
-				font-size: clamp(20px, 3vw, 30px);
-				font-weight: 700;
-				letter-spacing: -0.02em;
+				.tttColLabel,
+				.tttRowLabel {
+					font-size: 11px;
+				}
 			}
 
 			@media (max-width: 560px) {
@@ -345,9 +595,10 @@
 					grid-template-columns: repeat(2, minmax(0, 1fr));
 				}
 
-				.cell {
-					height: 84px;
-					font-size: 40px;
+				.tttCell {
+					width: 60px;
+					height: 60px;
+					font-size: 28px;
 				}
 			}
 		</style>
@@ -362,8 +613,8 @@
 
 				<h1 id="title">Ashish's Portfolio</h1>
 				<p class="sub">
-					I’m building this space to showcase my projects, experience, and writing.
-					It’ll be live at the end of next month.	
+					I'm building this space to showcase my projects, experience, and writing.
+					It'll be live at the end of next month.
 				</p>
 
 				<div class="launch">
@@ -393,75 +644,126 @@
 
 				<hr class="divider" />
 
-				<div class="grid" aria-labelledby="gameTitle">
-					<div class="gameHeader">
-						<div>
-							<h2 id="gameTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Tic‑Tac‑Toe</h2>
-							<p class="help">Play against the bot while the portfolio is cooking.</p>
+				<div class="tabs" id="gameTabs" aria-label="Game selector">
+					<button class="tabButton" type="button" data-view="ttt" aria-pressed="true">Tic‑Tac‑Toe</button>
+					<button class="tabButton" type="button" data-view="snake" aria-pressed="false">Snake</button>
+				</div>
+
+				<!-- TTT Game Panel -->
+				<div class="gamePanel active" id="tttPanel" data-game="ttt">
+					<div class="tttContainer">
+						<div class="tttMain">
+							<h2 class="tttTitle">TIC - TAC - TOE</h2>
+
+							<div class="tttControls">
+								<select class="select" id="tttMode" aria-label="Game mode">
+									<option value="ai">VS AI</option>
+									<option value="friend">VS FRIEND</option>
+								</select>
+								<select class="select" id="tttDifficulty" aria-label="AI Difficulty">
+									<option value="easy">EASY</option>
+									<option value="medium" selected>MEDIUM</option>
+									<option value="hard">HARD</option>
+								</select>
+								<button class="button" id="tttReset" type="button">NEW GAME</button>
+							</div>
+
+							<p class="tttStatus" id="tttStatus">Loading…</p>
+
+							<div class="tttBoardWrap">
+								<div class="tttBoard" id="tttBoard" role="grid" aria-label="Tic tac toe board">
+									<div class="tttCorner"></div>
+									<div class="tttColLabel">A</div>
+									<div class="tttColLabel">B</div>
+									<div class="tttColLabel">C</div>
+
+									<div class="tttRowLabel">1</div>
+									<button class="tttCell" type="button" data-index="0" data-pos="A1" aria-label="A1"></button>
+									<button class="tttCell" type="button" data-index="1" data-pos="B1" aria-label="B1"></button>
+									<button class="tttCell" type="button" data-index="2" data-pos="C1" aria-label="C1"></button>
+
+									<div class="tttRowLabel">2</div>
+									<button class="tttCell" type="button" data-index="3" data-pos="A2" aria-label="A2"></button>
+									<button class="tttCell" type="button" data-index="4" data-pos="B2" aria-label="B2"></button>
+									<button class="tttCell" type="button" data-index="5" data-pos="C2" aria-label="C2"></button>
+
+									<div class="tttRowLabel">3</div>
+									<button class="tttCell" type="button" data-index="6" data-pos="A3" aria-label="A3"></button>
+									<button class="tttCell" type="button" data-index="7" data-pos="B3" aria-label="B3"></button>
+									<button class="tttCell" type="button" data-index="8" data-pos="C3" aria-label="C3"></button>
+								</div>
+							</div>
+
+							<div class="tttMoveHistory">
+								<div class="tttMoveCol">
+									<div class="tttMoveColTitle X">X MOVE</div>
+									<ul class="tttMoveList" id="tttMovesX"></ul>
+								</div>
+								<div class="tttMoveCol">
+									<div class="tttMoveColTitle O">O MOVE</div>
+									<ul class="tttMoveList" id="tttMovesO"></ul>
+								</div>
+							</div>
 						</div>
 
-						<div class="controls">
-							<label class="help" for="difficulty" style="margin-right: 2px;">Difficulty</label>
-							<select class="select" id="difficulty" aria-label="Select difficulty">
-								<option value="easy">Easy</option>
-								<option value="medium" selected>Medium</option>
-								<option value="hard">Hard</option>
-							</select>
-							<button class="button" id="reset" type="button">New game</button>
-						</div>
-					</div>
+						<aside class="tttSidebar">
+							<h3 class="tttSidebarTitle">LEADERBOARD</h3>
+							<ul class="tttLeaderboard" id="tttLeaderboard">
+								<li><span class="rank">—</span><span class="name">No data yet</span><span class="wins"></span></li>
+							</ul>
 
-					<p class="status" id="status" aria-live="polite" aria-atomic="true">Loading…</p>
-
-					<div class="board" id="board" role="grid" aria-label="Tic tac toe board">
-						<button class="cell" type="button" data-index="0" aria-label="Cell 1"></button>
-						<button class="cell" type="button" data-index="1" aria-label="Cell 2"></button>
-						<button class="cell" type="button" data-index="2" aria-label="Cell 3"></button>
-						<button class="cell" type="button" data-index="3" aria-label="Cell 4"></button>
-						<button class="cell" type="button" data-index="4" aria-label="Cell 5"></button>
-						<button class="cell" type="button" data-index="5" aria-label="Cell 6"></button>
-						<button class="cell" type="button" data-index="6" aria-label="Cell 7"></button>
-						<button class="cell" type="button" data-index="7" aria-label="Cell 8"></button>
-						<button class="cell" type="button" data-index="8" aria-label="Cell 9"></button>
+							<div class="tttUserWrap">
+								<label class="tttUserLabel" for="tttUsername">YOUR NAME</label>
+								<input class="tttUserInput" type="text" id="tttUsername" maxlength="12" placeholder="Enter name…" />
+								<p class="tttUserStats" id="tttUserStats">Wins: 0</p>
+							</div>
+						</aside>
 					</div>
 				</div>
 
-				<hr class="divider" />
-
-				<div class="memoryWrap" aria-labelledby="memoryTitle">
+				<!-- Snake Game Panel -->
+				<section class="gamePanel gameCard grid" id="snakePanel" data-game="snake" aria-labelledby="snakeTitle">
 					<div class="gameHeader">
 						<div>
-							<h2 id="memoryTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Memory Match</h2>
-							<p class="help">Flip cards and find all matching pairs.</p>
+							<h2 id="snakeTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Snake</h2>
+							<p class="help">Arrow keys / WASD (or the pad) to play.</p>
 						</div>
 
 						<div class="controls">
-							<label class="help" for="mmDifficulty" style="margin-right: 2px;">Difficulty</label>
-							<select class="select" id="mmDifficulty" aria-label="Select memory match difficulty">
-								<option value="easy" selected>Easy (4×4)</option>
-								<option value="medium">Medium (4×6)</option>
-								<option value="hard">Hard (6×6)</option>
+							<label class="help" for="snakeSpeed" style="margin-right: 2px;">Speed</label>
+							<select class="select" id="snakeSpeed" aria-label="Snake speed">
+								<option value="slow">Slow</option>
+								<option value="normal" selected>Normal</option>
+								<option value="fast">Fast</option>
 							</select>
-							<button class="button" id="mmReset" type="button">New game</button>
+							<button class="button" id="snakeToggle" type="button">Start</button>
+							<button class="button" id="snakeReset" type="button">New</button>
 						</div>
 					</div>
 
-					<div class="memoryMeta">
-						<p class="status" id="mmStatus" aria-live="polite" aria-atomic="true">Loading…</p>
-						<div class="stats" aria-label="Memory match stats">
-							<span class="stat">Moves: <span id="mmMoves">0</span></span>
-							<span class="stat">Time: <span id="mmTime">0:00</span></span>
-							<span class="stat">Best: <span id="mmBest">—</span></span>
+					<p class="status" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
+					<p class="help" id="snakeStats">Score: 0 • High: 0</p>
+
+					<div class="snakeWrap">
+						<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
+						<div class="dpad" aria-label="Snake controls">
+							<button class="button blank" type="button" aria-hidden="true">.</button>
+							<button class="button" type="button" data-sdir="up">Up</button>
+							<button class="button blank" type="button" aria-hidden="true">.</button>
+							<button class="button" type="button" data-sdir="left">Left</button>
+							<button class="button" type="button" data-sdir="down">Down</button>
+							<button class="button" type="button" data-sdir="right">Right</button>
 						</div>
 					</div>
-
-					<div class="memoryBoard" id="mmBoard" style="--cols: 4" role="grid" aria-label="Memory match board"></div>
-				</div>
+				</section>
 			</section>
 		</main>
 
 		<script>
 			(function () {
+				// ===================
+				// Countdown Timer
+				// ===================
 				const daysEl = document.getElementById("days");
 				const hoursEl = document.getElementById("hours");
 				const minutesEl = document.getElementById("minutes");
@@ -470,15 +772,7 @@
 				const launchLineEl = document.getElementById("launchLine");
 
 				function getEndOfNextMonth(now) {
-					return new Date(
-						now.getFullYear(),
-						now.getMonth() + 2,
-						0,
-						23,
-						59,
-						59,
-						999
-					);
+					return new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
 				}
 
 				const target = getEndOfNextMonth(new Date());
@@ -507,7 +801,7 @@
 						minutesEl.textContent = "00";
 						secondsEl.textContent = "00";
 						launchLineEl.textContent = "This portfolio is live.";
-						clearInterval(timer);
+						clearInterval(countdownTimer);
 						return;
 					}
 
@@ -524,19 +818,108 @@
 				}
 
 				tick();
-				const timer = setInterval(tick, 1000);
+				const countdownTimer = setInterval(tick, 1000);
 
-				// -----------------
-				// Tic-Tac-Toe game
-				// -----------------
+				// ===================
+				// Game Tabs
+				// ===================
+				const gameTabsEl = document.getElementById("gameTabs");
+				const tttPanel = document.getElementById("tttPanel");
+				const snakePanel = document.getElementById("snakePanel");
+
+				function setGameView(view) {
+					const panels = { ttt: tttPanel, snake: snakePanel };
+					for (const [key, panel] of Object.entries(panels)) {
+						panel.classList.toggle("active", key === view);
+					}
+					for (const btn of Array.from(gameTabsEl.querySelectorAll(".tabButton"))) {
+						btn.setAttribute("aria-pressed", btn.getAttribute("data-view") === view ? "true" : "false");
+					}
+					localStorage.setItem("gameView", view);
+					if (view !== "snake") snakePause();
+				}
+
+				gameTabsEl.addEventListener("click", (event) => {
+					const target = event.target;
+					if (!(target instanceof HTMLElement)) return;
+					const btn = target.closest(".tabButton");
+					if (!(btn instanceof HTMLButtonElement)) return;
+					const view = btn.getAttribute("data-view") || "ttt";
+					setGameView(view);
+				});
+
+				setGameView(localStorage.getItem("gameView") || "ttt");
+
+				// ===================
+				// Leaderboard Storage (24h expiry)
+				// ===================
+				const LEADERBOARD_KEY = "tttLeaderboard";
+				const LEADERBOARD_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+				function getLeaderboard() {
+					try {
+						const raw = localStorage.getItem(LEADERBOARD_KEY);
+						if (!raw) return [];
+						const data = JSON.parse(raw);
+						if (Date.now() > data.expiry) {
+							localStorage.removeItem(LEADERBOARD_KEY);
+							return [];
+						}
+						return Array.isArray(data.entries) ? data.entries : [];
+					} catch {
+						return [];
+					}
+				}
+
+				function saveLeaderboard(entries) {
+					const data = {
+						expiry: Date.now() + LEADERBOARD_EXPIRY_MS,
+						entries: entries.slice(0, 20),
+					};
+					localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(data));
+				}
+
+				function addWinToLeaderboard(name) {
+					if (!name || !name.trim()) return;
+					const cleanName = name.trim().substring(0, 12);
+					const entries = getLeaderboard();
+					const existing = entries.find((e) => e.name.toLowerCase() === cleanName.toLowerCase());
+					if (existing) {
+						existing.wins += 1;
+						existing.name = cleanName;
+					} else {
+						entries.push({ name: cleanName, wins: 1 });
+					}
+					entries.sort((a, b) => b.wins - a.wins);
+					saveLeaderboard(entries);
+				}
+
+				function getUserWins(name) {
+					if (!name || !name.trim()) return 0;
+					const cleanName = name.trim().toLowerCase();
+					const entries = getLeaderboard();
+					const entry = entries.find((e) => e.name.toLowerCase() === cleanName);
+					return entry ? entry.wins : 0;
+				}
+
+				// ===================
+				// TIC-TAC-TOE
+				// ===================
 				const HUMAN = "X";
 				const BOT = "O";
+				const COLS = ["A", "B", "C"];
 
-				const difficultyEl = document.getElementById("difficulty");
-				const resetEl = document.getElementById("reset");
-				const statusEl = document.getElementById("status");
-				const boardEl = document.getElementById("board");
-				const cellEls = Array.from(boardEl.querySelectorAll(".cell"));
+				const tttModeEl = document.getElementById("tttMode");
+				const tttDifficultyEl = document.getElementById("tttDifficulty");
+				const tttResetEl = document.getElementById("tttReset");
+				const tttStatusEl = document.getElementById("tttStatus");
+				const tttBoardEl = document.getElementById("tttBoard");
+				const tttCellEls = Array.from(tttBoardEl.querySelectorAll(".tttCell"));
+				const tttMovesXEl = document.getElementById("tttMovesX");
+				const tttMovesOEl = document.getElementById("tttMovesO");
+				const tttLeaderboardEl = document.getElementById("tttLeaderboard");
+				const tttUsernameEl = document.getElementById("tttUsername");
+				const tttUserStatsEl = document.getElementById("tttUserStats");
 
 				const WIN_LINES = [
 					[0, 1, 2],
@@ -549,84 +932,152 @@
 					[2, 4, 6],
 				];
 
-				let board = new Array(9).fill(null);
-				let current = HUMAN;
-				let gameOver = false;
-				let botThinking = false;
+				let tttBoard = new Array(9).fill(null);
+				let tttCurrent = HUMAN;
+				let tttGameOver = false;
+				let tttBotThinking = false;
+				let tttMovesX = [];
+				let tttMovesO = [];
 
-				function getAvailableMoves(nextBoard) {
+				function indexToPos(index) {
+					const col = COLS[index % 3];
+					const row = Math.floor(index / 3) + 1;
+					return `${col}${row}`;
+				}
+
+				function getMode() {
+					return tttModeEl.value === "friend" ? "friend" : "ai";
+				}
+
+				function getDifficulty() {
+					return String(tttDifficultyEl.value || "medium").toLowerCase();
+				}
+
+				function setTttStatus(text) {
+					tttStatusEl.textContent = text;
+				}
+
+				function renderMoveHistory() {
+					tttMovesXEl.innerHTML = tttMovesX.map((m) => `<li>${m}</li>`).join("");
+					tttMovesOEl.innerHTML = tttMovesO.map((m) => `<li>${m}</li>`).join("");
+				}
+
+				function renderLeaderboard() {
+					const entries = getLeaderboard();
+					if (entries.length === 0) {
+						tttLeaderboardEl.innerHTML = `<li><span class="rank">—</span><span class="name">No data yet</span><span class="wins"></span></li>`;
+						return;
+					}
+					tttLeaderboardEl.innerHTML = entries
+						.slice(0, 10)
+						.map((e, i) => `<li><span class="rank">${i + 1}.</span><span class="name">${e.name}</span><span class="wins">${e.wins}W</span></li>`)
+						.join("");
+				}
+
+				function updateUserStats() {
+					const name = tttUsernameEl.value;
+					const wins = getUserWins(name);
+					tttUserStatsEl.textContent = `Wins: ${wins}`;
+				}
+
+				function getAvailableMoves(board) {
 					const moves = [];
-					for (let index = 0; index < nextBoard.length; index++) {
-						if (nextBoard[index] === null) moves.push(index);
+					for (let i = 0; i < board.length; i++) {
+						if (board[i] === null) moves.push(i);
 					}
 					return moves;
 				}
 
-				function getWinner(nextBoard) {
+				function getWinner(board) {
 					for (const line of WIN_LINES) {
 						const [a, b, c] = line;
-						if (nextBoard[a] && nextBoard[a] === nextBoard[b] && nextBoard[a] === nextBoard[c]) {
-							return { winner: nextBoard[a], line };
+						if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+							return { winner: board[a], line };
 						}
 					}
 					return { winner: null, line: null };
 				}
 
-				function isDraw(nextBoard) {
-					return nextBoard.every((cell) => cell !== null) && getWinner(nextBoard).winner === null;
-				}
-
-				function setStatus(text) {
-					statusEl.textContent = text;
+				function isDraw(board) {
+					return board.every((cell) => cell !== null) && getWinner(board).winner === null;
 				}
 
 				function clearWinHighlight() {
-					for (const cellEl of cellEls) cellEl.classList.remove("win");
+					for (const cellEl of tttCellEls) cellEl.classList.remove("win");
 				}
 
 				function highlightWinLine(line) {
 					if (!line) return;
 					for (const index of line) {
-						cellEls[index].classList.add("win");
+						tttCellEls[index].classList.add("win");
 					}
 				}
 
 				function render() {
-					for (let index = 0; index < cellEls.length; index++) {
-						const value = board[index];
-						cellEls[index].textContent = value ? value : "";
-						cellEls[index].disabled = gameOver || botThinking || value !== null;
+					const mode = getMode();
+					tttDifficultyEl.style.display = mode === "ai" ? "" : "none";
+
+					for (let i = 0; i < tttCellEls.length; i++) {
+						const value = tttBoard[i];
+						tttCellEls[i].textContent = value ? value : "";
+						tttCellEls[i].classList.remove("X", "O");
+						if (value) tttCellEls[i].classList.add(value);
+						tttCellEls[i].disabled = tttGameOver || tttBotThinking || value !== null;
 					}
+					renderMoveHistory();
 				}
 
-				function endGame(message, winLine) {
-					gameOver = true;
-					botThinking = false;
+				function endGame(message, winLine, winner) {
+					tttGameOver = true;
+					tttBotThinking = false;
 					clearWinHighlight();
 					highlightWinLine(winLine);
-					setStatus(message);
+					setTttStatus(message);
 					render();
+
+					if (winner === HUMAN && getMode() === "ai") {
+						const name = tttUsernameEl.value;
+						if (name && name.trim()) {
+							addWinToLeaderboard(name);
+							renderLeaderboard();
+							updateUserStats();
+						}
+					}
+
+					// Auto-restart after delay
+					setTimeout(() => {
+						startTttGame();
+					}, 1800);
 				}
 
 				function makeMove(index, player) {
-					if (board[index] !== null) return false;
-					board[index] = player;
+					if (tttBoard[index] !== null) return false;
+					tttBoard[index] = player;
+					const pos = indexToPos(index);
+					if (player === HUMAN) {
+						tttMovesX.push(pos);
+					} else {
+						tttMovesO.push(pos);
+					}
 					return true;
 				}
 
 				function maybeFinish() {
-					const { winner, line } = getWinner(board);
+					const { winner, line } = getWinner(tttBoard);
+					const mode = getMode();
+
 					if (winner === HUMAN) {
-						endGame("You win!", line);
+						const msg = mode === "ai" ? "PLAYER 1 WINS!" : "X WINS!";
+						endGame(msg, line, HUMAN);
 						return true;
 					}
 					if (winner === BOT) {
-						endGame("Bot wins.", line);
+						const msg = mode === "ai" ? "BOT WINS!" : "O WINS!";
+						endGame(msg, line, BOT);
 						return true;
 					}
-					if (isDraw(board)) {
-						endGame("It’s a draw. New game starting…", null);
-						window.setTimeout(startGame, 900);
+					if (isDraw(tttBoard)) {
+						endGame("IT'S A DRAW!", null, null);
 						return true;
 					}
 					return false;
@@ -636,9 +1087,9 @@
 					return moves[Math.floor(Math.random() * moves.length)];
 				}
 
-				function findImmediateWinIndex(player) {
-					for (const move of getAvailableMoves(board)) {
-						const trial = board.slice();
+				function findImmediateWin(player) {
+					for (const move of getAvailableMoves(tttBoard)) {
+						const trial = tttBoard.slice();
 						trial[move] = player;
 						if (getWinner(trial).winner === player) return move;
 					}
@@ -646,57 +1097,53 @@
 				}
 
 				function pickMoveEasy() {
-					const moves = getAvailableMoves(board);
-					return pickRandom(moves);
+					return pickRandom(getAvailableMoves(tttBoard));
 				}
 
 				function pickMoveMedium() {
-					const winNow = findImmediateWinIndex(BOT);
+					const winNow = findImmediateWin(BOT);
 					if (winNow !== null) return winNow;
-					const blockNow = findImmediateWinIndex(HUMAN);
+					const blockNow = findImmediateWin(HUMAN);
 					if (blockNow !== null) return blockNow;
-
-					if (board[4] === null) return 4;
-
-					const corners = [0, 2, 6, 8].filter((index) => board[index] === null);
+					if (tttBoard[4] === null) return 4;
+					const corners = [0, 2, 6, 8].filter((i) => tttBoard[i] === null);
 					if (corners.length) return pickRandom(corners);
-
 					return pickMoveEasy();
 				}
 
-				function minimax(nextBoard, depth, isMaximizing) {
-					const { winner } = getWinner(nextBoard);
+				function minimax(board, depth, isMaximizing) {
+					const { winner } = getWinner(board);
 					if (winner === BOT) return 10 - depth;
 					if (winner === HUMAN) return -10 + depth;
-					if (nextBoard.every((cell) => cell !== null)) return 0;
+					if (board.every((c) => c !== null)) return 0;
 
-					const moves = getAvailableMoves(nextBoard);
+					const moves = getAvailableMoves(board);
 					if (isMaximizing) {
-						let bestScore = -Infinity;
+						let best = -Infinity;
 						for (const move of moves) {
-							const trial = nextBoard.slice();
+							const trial = board.slice();
 							trial[move] = BOT;
-							bestScore = Math.max(bestScore, minimax(trial, depth + 1, false));
+							best = Math.max(best, minimax(trial, depth + 1, false));
 						}
-						return bestScore;
+						return best;
 					}
 
-					let bestScore = Infinity;
+					let best = Infinity;
 					for (const move of moves) {
-						const trial = nextBoard.slice();
+						const trial = board.slice();
 						trial[move] = HUMAN;
-						bestScore = Math.min(bestScore, minimax(trial, depth + 1, true));
+						best = Math.min(best, minimax(trial, depth + 1, true));
 					}
-					return bestScore;
+					return best;
 				}
 
 				function pickMoveHard() {
-					const moves = getAvailableMoves(board);
+					const moves = getAvailableMoves(tttBoard);
 					let bestScore = -Infinity;
 					let bestMoves = [];
 
 					for (const move of moves) {
-						const trial = board.slice();
+						const trial = tttBoard.slice();
 						trial[move] = BOT;
 						const score = minimax(trial, 0, false);
 						if (score > bestScore) {
@@ -706,43 +1153,50 @@
 							bestMoves.push(move);
 						}
 					}
-
 					return pickRandom(bestMoves);
 				}
 
 				function pickBotMove() {
-					const difficulty = String(difficultyEl.value || "medium").toLowerCase();
-					if (difficulty === "easy") return pickMoveEasy();
-					if (difficulty === "hard") return pickMoveHard();
+					const diff = getDifficulty();
+					if (diff === "easy") return pickMoveEasy();
+					if (diff === "hard") return pickMoveHard();
 					return pickMoveMedium();
 				}
 
 				function botPlay() {
-					if (gameOver) return;
-					if (current !== BOT) return;
+					if (tttGameOver) return;
+					if (tttCurrent !== BOT) return;
 
-					botThinking = true;
-					setStatus("Bot is thinking…");
+					tttBotThinking = true;
+					setTttStatus("BOT IS THINKING…");
 					render();
 
-					window.setTimeout(() => {
+					setTimeout(() => {
 						const move = pickBotMove();
 						makeMove(move, BOT);
-						botThinking = false;
+						tttBotThinking = false;
 						if (maybeFinish()) return;
-						current = HUMAN;
-						setStatus("Your turn (X).");
+						tttCurrent = HUMAN;
+						setTttStatus("YOUR TURN (X)");
 						render();
-					}, 320);
+					}, 400);
 				}
 
-				function startGame() {
-					board = new Array(9).fill(null);
-					current = HUMAN;
-					gameOver = false;
-					botThinking = false;
+				function startTttGame() {
+					tttBoard = new Array(9).fill(null);
+					tttCurrent = HUMAN;
+					tttGameOver = false;
+					tttBotThinking = false;
+					tttMovesX = [];
+					tttMovesO = [];
 					clearWinHighlight();
-					setStatus("Your turn (X). Bot is O.");
+
+					const mode = getMode();
+					if (mode === "ai") {
+						setTttStatus("YOUR TURN (X) - VS AI");
+					} else {
+						setTttStatus("X's TURN - VS FRIEND");
+					}
 					render();
 				}
 
@@ -754,321 +1208,257 @@
 					const index = Number(indexStr);
 					if (!Number.isFinite(index)) return;
 
-					if (gameOver || botThinking) return;
-					if (current !== HUMAN) return;
-					if (!makeMove(index, HUMAN)) return;
+					if (tttGameOver || tttBotThinking) return;
 
-					clearWinHighlight();
-					if (maybeFinish()) return;
-					current = BOT;
-					botPlay();
-					render();
-				}
+					const mode = getMode();
 
-				boardEl.addEventListener("click", onCellClick);
-				resetEl.addEventListener("click", startGame);
-				difficultyEl.addEventListener("change", startGame);
-
-				startGame();
-
-				// -----------------
-				// Memory Match game
-				// -----------------
-				const mmDifficultyEl = document.getElementById("mmDifficulty");
-				const mmResetEl = document.getElementById("mmReset");
-				const mmStatusEl = document.getElementById("mmStatus");
-				const mmMovesEl = document.getElementById("mmMoves");
-				const mmTimeEl = document.getElementById("mmTime");
-				const mmBestEl = document.getElementById("mmBest");
-				const mmBoardEl = document.getElementById("mmBoard");
-
-				const MM_ICONS = [
-					"🍕",
-					"🍔",
-					"🍟",
-					"🍣",
-					"🍜",
-					"🌮",
-					"🍩",
-					"🍪",
-					"🍉",
-					"🍓",
-					"🍒",
-					"🍍",
-					"🥑",
-					"🌶️",
-					"🧁",
-					"🍫",
-					"⚽",
-					"🏀",
-					"🎸",
-					"🎧",
-					"🎮",
-					"🚀",
-					"🌙",
-					"⭐",
-					"🧠",
-					"💎",
-					"🔥",
-					"🌈",
-					"🧊",
-					"🍀",
-					"🦄",
-					"🐼",
-					"🐙",
-					"🐧",
-					"🦊",
-					"🦁",
-				];
-
-				let mmCards = [];
-				let mmFirst = null;
-				let mmSecond = null;
-				let mmLocked = false;
-				let mmMoves = 0;
-				let mmMatchedPairs = 0;
-				let mmTimer = null;
-				let mmStartTs = null;
-
-				function mmSetStatus(text) {
-					mmStatusEl.textContent = text;
-				}
-
-				function mmFormatSeconds(seconds) {
-					const minutes = Math.floor(seconds / 60);
-					const rem = seconds % 60;
-					return `${minutes}:${String(rem).padStart(2, "0")}`;
-				}
-
-				function mmStopTimer() {
-					if (mmTimer) {
-						clearInterval(mmTimer);
-						mmTimer = null;
+					if (mode === "ai") {
+						if (tttCurrent !== HUMAN) return;
+						if (!makeMove(index, HUMAN)) return;
+						clearWinHighlight();
+						if (maybeFinish()) return;
+						tttCurrent = BOT;
+						botPlay();
+						render();
+					} else {
+						if (!makeMove(index, tttCurrent)) return;
+						clearWinHighlight();
+						if (maybeFinish()) return;
+						tttCurrent = tttCurrent === HUMAN ? BOT : HUMAN;
+						setTttStatus(`${tttCurrent}'s TURN - VS FRIEND`);
+						render();
 					}
 				}
 
-				function mmStartTimerIfNeeded() {
-					if (mmStartTs !== null) return;
-					mmStartTs = Date.now();
-					mmTimer = setInterval(() => {
-						const elapsed = Math.floor((Date.now() - mmStartTs) / 1000);
-						mmTimeEl.textContent = mmFormatSeconds(elapsed);
-					}, 250);
+				tttBoardEl.addEventListener("click", onCellClick);
+				tttResetEl.addEventListener("click", startTttGame);
+				tttModeEl.addEventListener("change", startTttGame);
+				tttDifficultyEl.addEventListener("change", startTttGame);
+				tttUsernameEl.addEventListener("input", updateUserStats);
+
+				// Load saved username
+				const savedName = localStorage.getItem("tttUsername") || "";
+				tttUsernameEl.value = savedName;
+				tttUsernameEl.addEventListener("change", () => {
+					localStorage.setItem("tttUsername", tttUsernameEl.value);
+				});
+
+				renderLeaderboard();
+				updateUserStats();
+				startTttGame();
+
+				// ===================
+				// SNAKE GAME
+				// ===================
+				const snakeCanvas = document.getElementById("snakeCanvas");
+				const snakeCtx = snakeCanvas.getContext("2d");
+				const snakeSpeedEl = document.getElementById("snakeSpeed");
+				const snakeToggleEl = document.getElementById("snakeToggle");
+				const snakeResetEl = document.getElementById("snakeReset");
+				const snakeStatusEl = document.getElementById("snakeStatus");
+				const snakeStatsEl = document.getElementById("snakeStats");
+
+				const GRID = 20;
+				const CELL = Math.floor(snakeCanvas.width / GRID);
+
+				let snake = [];
+				let snakeDir = { x: 1, y: 0 };
+				let pendingDir = null;
+				let food = { x: 0, y: 0 };
+				let snakeScore = 0;
+				let snakeHigh = Number(localStorage.getItem("snakeHighScore") || "0") || 0;
+				let snakeRunning = false;
+				let snakeIntervalId = null;
+				let snakeAlive = true;
+
+				function setSnakeStatus(text) {
+					snakeStatusEl.textContent = text;
 				}
 
-				function mmShuffle(array) {
-					for (let i = array.length - 1; i > 0; i--) {
-						const j = Math.floor(Math.random() * (i + 1));
-						[array[i], array[j]] = [array[j], array[i]];
+				function updateSnakeStats() {
+					snakeStatsEl.textContent = `Score: ${snakeScore} • High: ${snakeHigh}`;
+				}
+
+				function snakeSpeedMs() {
+					const v = String(snakeSpeedEl.value || "normal");
+					if (v === "slow") return 140;
+					if (v === "fast") return 75;
+					return 105;
+				}
+
+				function sameDir(a, b) {
+					return a && b && a.x === b.x && a.y === b.y;
+				}
+
+				function isOpposite(a, b) {
+					return a && b && a.x === -b.x && a.y === -b.y;
+				}
+
+				function randCell() {
+					return {
+						x: Math.floor(Math.random() * GRID),
+						y: Math.floor(Math.random() * GRID),
+					};
+				}
+
+				function cellKey(p) {
+					return `${p.x},${p.y}`;
+				}
+
+				function placeFood() {
+					const occupied = new Set(snake.map(cellKey));
+					let tries = 0;
+					do {
+						food = randCell();
+						tries += 1;
+					} while (occupied.has(cellKey(food)) && tries < 200);
+				}
+
+				function snakeReset(startRunning = false) {
+					snake = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
+					snakeDir = { x: 1, y: 0 };
+					pendingDir = null;
+					snakeScore = 0;
+					snakeAlive = true;
+					placeFood();
+					updateSnakeStats();
+					setSnakeStatus("Ready. Press Start.");
+					snakeRender();
+					if (startRunning) snakePlay();
+					else snakePause();
+				}
+
+				function snakeRender() {
+					snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+
+					snakeCtx.save();
+					snakeCtx.globalAlpha = 0.12;
+					snakeCtx.strokeStyle = "rgba(255,255,255,0.35)";
+					for (let i = 0; i <= GRID; i++) {
+						const p = i * CELL;
+						snakeCtx.beginPath();
+						snakeCtx.moveTo(p, 0);
+						snakeCtx.lineTo(p, GRID * CELL);
+						snakeCtx.stroke();
+						snakeCtx.beginPath();
+						snakeCtx.moveTo(0, p);
+						snakeCtx.lineTo(GRID * CELL, p);
+						snakeCtx.stroke();
 					}
-					return array;
-				}
+					snakeCtx.restore();
 
-				function mmGetConfig() {
-					const value = String(mmDifficultyEl.value || "easy");
-					if (value === "hard") return { cols: 6, rows: 6, key: "hard" };
-					if (value === "medium") return { cols: 6, rows: 4, key: "medium" };
-					return { cols: 4, rows: 4, key: "easy" };
-				}
+					snakeCtx.fillStyle = "rgba(34,211,238,0.95)";
+					snakeCtx.beginPath();
+					snakeCtx.arc((food.x + 0.5) * CELL, (food.y + 0.5) * CELL, CELL * 0.3, 0, Math.PI * 2);
+					snakeCtx.fill();
 
-				function mmBestKey(configKey) {
-					return `mm_best_seconds_${configKey}`;
-				}
-
-				function mmLoadBest(configKey) {
-					const raw = localStorage.getItem(mmBestKey(configKey));
-					if (!raw) return null;
-					const value = Number(raw);
-					return Number.isFinite(value) ? value : null;
-				}
-
-				function mmSaveBest(configKey, seconds) {
-					const existing = mmLoadBest(configKey);
-					if (existing === null || seconds < existing) {
-						localStorage.setItem(mmBestKey(configKey), String(seconds));
+					for (let i = 0; i < snake.length; i++) {
+						const part = snake[i];
+						const isHead = i === 0;
+						snakeCtx.fillStyle = isHead ? "rgba(124,92,255,0.95)" : "rgba(255,255,255,0.86)";
+						snakeCtx.fillRect(part.x * CELL + 2, part.y * CELL + 2, CELL - 4, CELL - 4);
 					}
 				}
 
-				function mmRenderBest(configKey) {
-					const best = mmLoadBest(configKey);
-					mmBestEl.textContent = best === null ? "—" : mmFormatSeconds(best);
-				}
-
-				function mmResetState() {
-					mmCards = [];
-					mmFirst = null;
-					mmSecond = null;
-					mmLocked = false;
-					mmMoves = 0;
-					mmMatchedPairs = 0;
-					mmStopTimer();
-					mmStartTs = null;
-					mmMovesEl.textContent = "0";
-					mmTimeEl.textContent = "0:00";
-				}
-
-				function mmBuildDeck(pairCount) {
-					const icons = MM_ICONS.slice(0, pairCount);
-					const deck = [];
-					for (let i = 0; i < icons.length; i++) {
-						deck.push({ id: `${i}-a`, value: icons[i], matched: false });
-						deck.push({ id: `${i}-b`, value: icons[i], matched: false });
+				function snakeStep() {
+					if (!snakeRunning || !snakeAlive) return;
+					if (pendingDir && !isOpposite(pendingDir, snakeDir) && !sameDir(pendingDir, snakeDir)) {
+						snakeDir = pendingDir;
 					}
-					return mmShuffle(deck);
-				}
+					pendingDir = null;
 
-				function mmRenderBoard(config) {
-					mmBoardEl.style.setProperty("--cols", String(config.cols));
-					mmBoardEl.innerHTML = "";
-					const fragment = document.createDocumentFragment();
-					for (let i = 0; i < mmCards.length; i++) {
-						const card = mmCards[i];
-						const button = document.createElement("button");
-						button.type = "button";
-						button.className = "card";
-						button.setAttribute("data-index", String(i));
-						button.setAttribute("aria-label", "Memory card");
-
-						const back = document.createElement("span");
-						back.className = "face back";
-						back.textContent = "";
-
-						const front = document.createElement("span");
-						front.className = "face front";
-						front.textContent = card.value;
-
-						button.appendChild(back);
-						button.appendChild(front);
-						fragment.appendChild(button);
-					}
-					mmBoardEl.appendChild(fragment);
-				}
-
-				function mmSetCardUI(index, flipped) {
-					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
-					if (!(cardEl instanceof HTMLElement)) return;
-					cardEl.classList.toggle("flipped", flipped);
-					cardEl.classList.toggle("matched", Boolean(mmCards[index]?.matched));
-					(cardEl).toggleAttribute?.("disabled", false);
-				}
-
-				function mmUpdateAllCardInteractivity() {
-					const cardEls = Array.from(mmBoardEl.querySelectorAll(".card"));
-					for (let i = 0; i < cardEls.length; i++) {
-						const el = cardEls[i];
-						const idx = Number(el.getAttribute("data-index"));
-						const card = mmCards[idx];
-						const disabled =
-							mmLocked ||
-							!card ||
-							card.matched ||
-							(idx === mmFirst || idx === mmSecond);
-						el.disabled = disabled;
-						el.classList.toggle("matched", Boolean(card?.matched));
-					}
-				}
-
-				function mmFlip(index) {
-					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
-					if (!(cardEl instanceof HTMLElement)) return;
-					cardEl.classList.add("flipped");
-				}
-
-				function mmUnflip(index) {
-					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
-					if (!(cardEl instanceof HTMLElement)) return;
-					cardEl.classList.remove("flipped");
-				}
-
-				function mmMarkMatched(index) {
-					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
-					if (!(cardEl instanceof HTMLElement)) return;
-					cardEl.classList.add("matched");
-					cardEl.disabled = true;
-				}
-
-				function mmCheckComplete(configKey, pairCount) {
-					if (mmMatchedPairs !== pairCount) return;
-					mmStopTimer();
-					const elapsed = mmStartTs ? Math.floor((Date.now() - mmStartTs) / 1000) : 0;
-					mmSaveBest(configKey, elapsed);
-					mmRenderBest(configKey);
-					mmSetStatus("You cleared it! Start a new game or change difficulty.");
-				}
-
-				function mmOnCardClick(event) {
-					const target = event.target;
-					if (!(target instanceof Element)) return;
-					const cardEl = target.closest(".card");
-					if (!cardEl) return;
-					const index = Number(cardEl.getAttribute("data-index"));
-					if (!Number.isFinite(index)) return;
-					if (mmLocked) return;
-					const card = mmCards[index];
-					if (!card || card.matched) return;
-					if (index === mmFirst || index === mmSecond) return;
-
-					mmStartTimerIfNeeded();
-					mmFlip(index);
-
-					if (mmFirst === null) {
-						mmFirst = index;
-						mmSetStatus("Pick a second card.");
-						mmUpdateAllCardInteractivity();
-						return;
+					const head = snake[0];
+					const next = { x: head.x + snakeDir.x, y: head.y + snakeDir.y };
+					if (next.x < 0 || next.y < 0 || next.x >= GRID || next.y >= GRID) {
+						return snakeDie();
 					}
 
-					mmSecond = index;
-					mmMoves++;
-					mmMovesEl.textContent = String(mmMoves);
-					mmLocked = true;
-					mmUpdateAllCardInteractivity();
+					const body = new Set(snake.map(cellKey));
+					if (body.has(cellKey(next))) {
+						return snakeDie();
+					}
 
-					const firstCard = mmCards[mmFirst];
-					const secondCard = mmCards[mmSecond];
-					const config = mmGetConfig();
-					const pairCount = (config.cols * config.rows) / 2;
-
-					window.setTimeout(() => {
-						if (firstCard.value === secondCard.value) {
-							firstCard.matched = true;
-							secondCard.matched = true;
-							mmMatchedPairs++;
-							mmMarkMatched(mmFirst);
-							mmMarkMatched(mmSecond);
-							mmSetStatus("Match! Keep going.");
-						} else {
-							mmUnflip(mmFirst);
-							mmUnflip(mmSecond);
-							mmSetStatus("Not a match. Try again.");
+					snake.unshift(next);
+					const ate = next.x === food.x && next.y === food.y;
+					if (ate) {
+						snakeScore += 1;
+						if (snakeScore > snakeHigh) {
+							snakeHigh = snakeScore;
+							localStorage.setItem("snakeHighScore", String(snakeHigh));
 						}
+						placeFood();
+						setSnakeStatus("Nice! Keep going.");
+						updateSnakeStats();
+					} else {
+						snake.pop();
+					}
 
-						mmFirst = null;
-						mmSecond = null;
-						mmLocked = false;
-						mmUpdateAllCardInteractivity();
-						mmCheckComplete(config.key, pairCount);
-					}, 520);
+					snakeRender();
 				}
 
-				function mmStartGame() {
-					mmResetState();
-					const config = mmGetConfig();
-					const totalCards = config.cols * config.rows;
-					const pairCount = totalCards / 2;
-					mmCards = mmBuildDeck(pairCount);
-					mmRenderBest(config.key);
-					mmRenderBoard(config);
-					mmSetStatus("Flip any card to start.");
-					mmLocked = false;
-					mmBoardEl.removeEventListener("click", mmOnCardClick);
-					mmBoardEl.addEventListener("click", mmOnCardClick);
-					mmUpdateAllCardInteractivity();
+				function snakeDie() {
+					snakeAlive = false;
+					snakePause();
+					setSnakeStatus("Game over. Press New to try again.");
 				}
 
-				mmResetEl.addEventListener("click", mmStartGame);
-				mmDifficultyEl.addEventListener("change", mmStartGame);
-				mmStartGame();
+				function snakePlay() {
+					if (!snakeAlive) return;
+					snakeRunning = true;
+					snakeToggleEl.textContent = "Pause";
+					setSnakeStatus("Playing…");
+					if (snakeIntervalId) clearInterval(snakeIntervalId);
+					snakeIntervalId = setInterval(snakeStep, snakeSpeedMs());
+				}
+
+				function snakePause() {
+					snakeRunning = false;
+					snakeToggleEl.textContent = "Start";
+					if (snakeIntervalId) {
+						clearInterval(snakeIntervalId);
+						snakeIntervalId = null;
+					}
+				}
+
+				function snakeToggle() {
+					if (!snakeAlive) return;
+					if (snakeRunning) snakePause();
+					else snakePlay();
+				}
+
+				function setPendingDir(dir) {
+					if (!dir) return;
+					if (isOpposite(dir, snakeDir)) return;
+					pendingDir = dir;
+				}
+
+				snakeToggleEl.addEventListener("click", snakeToggle);
+				snakeResetEl.addEventListener("click", () => snakeReset(true));
+				snakeSpeedEl.addEventListener("change", () => {
+					if (snakeRunning) snakePlay();
+				});
+
+				document.addEventListener("keydown", (e) => {
+					const key = String(e.key || "").toLowerCase();
+					if (key === "arrowup" || key === "w") setPendingDir({ x: 0, y: -1 });
+					else if (key === "arrowdown" || key === "s") setPendingDir({ x: 0, y: 1 });
+					else if (key === "arrowleft" || key === "a") setPendingDir({ x: -1, y: 0 });
+					else if (key === "arrowright" || key === "d") setPendingDir({ x: 1, y: 0 });
+					else return;
+					e.preventDefault();
+				});
+
+				for (const btn of Array.from(document.querySelectorAll("[data-sdir]"))) {
+					btn.addEventListener("click", () => {
+						const d = btn.getAttribute("data-sdir");
+						if (d === "up") setPendingDir({ x: 0, y: -1 });
+						else if (d === "down") setPendingDir({ x: 0, y: 1 });
+						else if (d === "left") setPendingDir({ x: -1, y: 0 });
+						else if (d === "right") setPendingDir({ x: 1, y: 0 });
+					});
+				}
+
+				snakeReset(false);
 			})();
 		</script>
 	</body>
