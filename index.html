@@ -462,60 +462,117 @@
 				text-align: center;
 			}
 
-			/* Snake game styles */
-			.gameCard {
-				border: 1px solid rgba(255, 255, 255, 0.12);
-				background: rgba(0, 0, 0, 0.14);
-				border-radius: 16px;
-				padding: 16px;
+			/* ===================== */
+			/* RETRO SNAKE GAME     */
+			/* ===================== */
+			.snakeMain {
+				background: var(--retroBg);
+				border: 4px solid var(--neonCyan);
+				border-radius: 18px;
+				padding: 18px;
+				box-shadow:
+					0 0 20px rgba(34, 211, 238, 0.25),
+					inset 0 0 40px rgba(0, 0, 0, 0.5);
 			}
 
-			.gameHeader {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 12px;
-				align-items: center;
-				justify-content: space-between;
+			.snakeTitle {
+				font-family: 'Press Start 2P', monospace;
+				font-size: clamp(18px, 3vw, 28px);
+				text-align: center;
+				margin: 0 0 14px;
+				color: var(--neonCyan);
+				text-shadow:
+					0 0 8px var(--neonCyan),
+					0 0 20px var(--neonCyan);
+				letter-spacing: 0.12em;
 			}
 
-			.controls {
+			.snakeControls {
 				display: flex;
 				flex-wrap: wrap;
 				gap: 10px;
 				align-items: center;
+				justify-content: center;
+				margin-bottom: 14px;
 			}
 
-			.status {
-				margin: 0;
-				color: var(--muted);
-				font-size: 14px;
+			.snakeControls .select,
+			.snakeControls .button {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 10px;
+				padding: 8px 10px;
+				border-color: var(--neonCyan);
+				background: rgba(34, 211, 238, 0.08);
+				color: var(--neonCyan);
+			}
+
+			.snakeControls .button:hover {
+				background: rgba(34, 211, 238, 0.18);
+			}
+
+			.snakeStatus {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 11px;
+				text-align: center;
+				margin: 0 0 10px;
+				color: var(--neonYellow);
+				text-shadow: 0 0 6px var(--neonYellow);
+				min-height: 20px;
+			}
+
+			.snakeStats {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 10px;
+				text-align: center;
+				margin: 0 0 14px;
+				color: var(--neonPink);
+				text-shadow: 0 0 6px var(--neonPink);
 			}
 
 			.snakeWrap {
-				display: grid;
-				gap: 12px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 14px;
 			}
 
 			.snakeCanvas {
 				width: 100%;
 				max-width: 360px;
 				aspect-ratio: 1 / 1;
-				border-radius: 16px;
-				border: 1px solid rgba(255, 255, 255, 0.14);
-				background: rgba(0, 0, 0, 0.18);
+				border-radius: 12px;
+				border: 3px dashed rgba(34, 211, 238, 0.5);
+				background: rgba(0, 0, 0, 0.4);
 				display: block;
+			}
+
+			.snakeHelp {
+				font-family: 'Press Start 2P', monospace;
+				font-size: 8px;
+				color: var(--muted);
+				text-align: center;
+				margin: 0;
 			}
 
 			.dpad {
 				display: grid;
 				grid-template-columns: repeat(3, 1fr);
 				gap: 8px;
-				max-width: 240px;
+				max-width: 200px;
 			}
 
 			.dpad .button {
-				padding: 10px 10px;
-				border-radius: 14px;
+				font-family: 'Press Start 2P', monospace;
+				font-size: 9px;
+				padding: 12px 8px;
+				border-radius: 10px;
+				border-color: var(--neonCyan);
+				background: rgba(34, 211, 238, 0.08);
+				color: var(--neonCyan);
+			}
+
+			.dpad .button:hover {
+				background: rgba(34, 211, 238, 0.18);
 			}
 
 			.dpad .blank {
@@ -722,40 +779,37 @@
 				</div>
 
 				<!-- Snake Game Panel -->
-				<section class="gamePanel gameCard grid" id="snakePanel" data-game="snake" aria-labelledby="snakeTitle">
-					<div class="gameHeader">
-						<div>
-							<h2 id="snakeTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Snake</h2>
-							<p class="help">Arrow keys / WASD (or the pad) to play.</p>
-						</div>
+				<div class="gamePanel" id="snakePanel" data-game="snake">
+					<div class="snakeMain">
+						<h2 class="snakeTitle">S N A K E</h2>
 
-						<div class="controls">
-							<label class="help" for="snakeSpeed" style="margin-right: 2px;">Speed</label>
+						<div class="snakeControls">
 							<select class="select" id="snakeSpeed" aria-label="Snake speed">
-								<option value="slow">Slow</option>
-								<option value="normal" selected>Normal</option>
-								<option value="fast">Fast</option>
+								<option value="slow">SLOW</option>
+								<option value="normal" selected>NORMAL</option>
+								<option value="fast">FAST</option>
 							</select>
-							<button class="button" id="snakeToggle" type="button">Start</button>
-							<button class="button" id="snakeReset" type="button">New</button>
+							<button class="button" id="snakeToggle" type="button">START</button>
+							<button class="button" id="snakeReset" type="button">NEW GAME</button>
+						</div>
+
+						<p class="snakeStatus" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
+						<p class="snakeStats" id="snakeStats">SCORE: 0 • HIGH: 0</p>
+
+						<div class="snakeWrap">
+							<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
+							<p class="snakeHelp">ARROW KEYS / WASD TO PLAY</p>
+							<div class="dpad" aria-label="Snake controls">
+								<button class="button blank" type="button" aria-hidden="true">.</button>
+								<button class="button" type="button" data-sdir="up">▲</button>
+								<button class="button blank" type="button" aria-hidden="true">.</button>
+								<button class="button" type="button" data-sdir="left">◀</button>
+								<button class="button" type="button" data-sdir="down">▼</button>
+								<button class="button" type="button" data-sdir="right">▶</button>
+							</div>
 						</div>
 					</div>
-
-					<p class="status" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
-					<p class="help" id="snakeStats">Score: 0 • High: 0</p>
-
-					<div class="snakeWrap">
-						<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
-						<div class="dpad" aria-label="Snake controls">
-							<button class="button blank" type="button" aria-hidden="true">.</button>
-							<button class="button" type="button" data-sdir="up">Up</button>
-							<button class="button blank" type="button" aria-hidden="true">.</button>
-							<button class="button" type="button" data-sdir="left">Left</button>
-							<button class="button" type="button" data-sdir="down">Down</button>
-							<button class="button" type="button" data-sdir="right">Right</button>
-						</div>
-					</div>
-				</section>
+				</div>
 			</section>
 		</main>
 
@@ -1242,6 +1296,15 @@
 				tttUsernameEl.addEventListener("change", () => {
 					localStorage.setItem("tttUsername", tttUsernameEl.value);
 				});
+				// Press Enter on username to start new game
+				tttUsernameEl.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						localStorage.setItem("tttUsername", tttUsernameEl.value);
+						startTttGame();
+						tttUsernameEl.blur();
+					}
+				});
 
 				renderLeaderboard();
 				updateUserStats();
@@ -1272,11 +1335,11 @@
 				let snakeAlive = true;
 
 				function setSnakeStatus(text) {
-					snakeStatusEl.textContent = text;
+					snakeStatusEl.textContent = text.toUpperCase();
 				}
 
 				function updateSnakeStats() {
-					snakeStatsEl.textContent = `Score: ${snakeScore} • High: ${snakeHigh}`;
+					snakeStatsEl.textContent = `SCORE: ${snakeScore} • HIGH: ${snakeHigh}`;
 				}
 
 				function snakeSpeedMs() {
@@ -1331,9 +1394,10 @@
 				function snakeRender() {
 					snakeCtx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
 
+					// Draw grid with neon cyan
 					snakeCtx.save();
-					snakeCtx.globalAlpha = 0.12;
-					snakeCtx.strokeStyle = "rgba(255,255,255,0.35)";
+					snakeCtx.globalAlpha = 0.15;
+					snakeCtx.strokeStyle = "#22d3ee";
 					for (let i = 0; i <= GRID; i++) {
 						const p = i * CELL;
 						snakeCtx.beginPath();
@@ -1347,17 +1411,25 @@
 					}
 					snakeCtx.restore();
 
-					snakeCtx.fillStyle = "rgba(34,211,238,0.95)";
+					// Draw food with neon pink glow
+					snakeCtx.shadowColor = "#ff6ec7";
+					snakeCtx.shadowBlur = 12;
+					snakeCtx.fillStyle = "#ff6ec7";
 					snakeCtx.beginPath();
-					snakeCtx.arc((food.x + 0.5) * CELL, (food.y + 0.5) * CELL, CELL * 0.3, 0, Math.PI * 2);
+					snakeCtx.arc((food.x + 0.5) * CELL, (food.y + 0.5) * CELL, CELL * 0.35, 0, Math.PI * 2);
 					snakeCtx.fill();
+					snakeCtx.shadowBlur = 0;
 
+					// Draw snake with neon green glow
 					for (let i = 0; i < snake.length; i++) {
 						const part = snake[i];
 						const isHead = i === 0;
-						snakeCtx.fillStyle = isHead ? "rgba(124,92,255,0.95)" : "rgba(255,255,255,0.86)";
+						snakeCtx.shadowColor = isHead ? "#39ff14" : "#22d3ee";
+						snakeCtx.shadowBlur = isHead ? 14 : 8;
+						snakeCtx.fillStyle = isHead ? "#39ff14" : "#22d3ee";
 						snakeCtx.fillRect(part.x * CELL + 2, part.y * CELL + 2, CELL - 4, CELL - 4);
 					}
+					snakeCtx.shadowBlur = 0;
 				}
 
 				function snakeStep() {
@@ -1405,7 +1477,7 @@
 				function snakePlay() {
 					if (!snakeAlive) return;
 					snakeRunning = true;
-					snakeToggleEl.textContent = "Pause";
+					snakeToggleEl.textContent = "PAUSE";
 					setSnakeStatus("Playing…");
 					if (snakeIntervalId) clearInterval(snakeIntervalId);
 					snakeIntervalId = setInterval(snakeStep, snakeSpeedMs());
@@ -1413,7 +1485,7 @@
 
 				function snakePause() {
 					snakeRunning = false;
-					snakeToggleEl.textContent = "Start";
+					snakeToggleEl.textContent = "START";
 					if (snakeIntervalId) {
 						clearInterval(snakeIntervalId);
 						snakeIntervalId = null;
