@@ -242,6 +242,100 @@
 				font-size: 14px;
 			}
 
+			.memoryWrap {
+				display: grid;
+				gap: 12px;
+			}
+
+			.memoryMeta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px 14px;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.stats {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px;
+				align-items: center;
+				color: var(--muted);
+				font-size: 13px;
+			}
+
+			.stat {
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.14);
+				border-radius: 999px;
+				padding: 8px 10px;
+				font-variant-numeric: tabular-nums;
+			}
+
+			.memoryBoard {
+				display: grid;
+				gap: 10px;
+				grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+				width: min(520px, 100%);
+			}
+
+			.card {
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				background: rgba(0, 0, 0, 0.18);
+				border-radius: 16px;
+				padding: 0;
+				cursor: pointer;
+				color: var(--text);
+				aspect-ratio: 1 / 1;
+				position: relative;
+				transform-style: preserve-3d;
+				transition: transform 240ms ease, border-color 120ms ease,
+					background 120ms ease;
+			}
+
+			.card:hover {
+				transform: translateY(-1px);
+				border-color: rgba(255, 255, 255, 0.22);
+			}
+
+			.card:disabled {
+				cursor: not-allowed;
+				opacity: 0.8;
+			}
+
+			.card.flipped {
+				transform: rotateY(180deg);
+			}
+
+			.card.matched {
+				border-color: rgba(124, 92, 255, 0.5);
+				background: rgba(124, 92, 255, 0.08);
+			}
+
+			.face {
+				position: absolute;
+				inset: 0;
+				border-radius: 16px;
+				display: grid;
+				place-items: center;
+				backface-visibility: hidden;
+			}
+
+			.face.back {
+				background:
+					radial-gradient(140px 120px at 30% 20%, rgba(124, 92, 255, 0.32), transparent 60%),
+					radial-gradient(140px 120px at 70% 80%, rgba(34, 211, 238, 0.22), transparent 60%),
+					rgba(255, 255, 255, 0.04);
+			}
+
+			.face.front {
+				transform: rotateY(180deg);
+				font-size: clamp(20px, 3vw, 30px);
+				font-weight: 700;
+				letter-spacing: -0.02em;
+			}
+
 			@media (max-width: 560px) {
 				.hero {
 					padding: 20px;
@@ -330,6 +424,38 @@
 						<button class="cell" type="button" data-index="7" aria-label="Cell 8"></button>
 						<button class="cell" type="button" data-index="8" aria-label="Cell 9"></button>
 					</div>
+				</div>
+
+				<hr class="divider" />
+
+				<div class="memoryWrap" aria-labelledby="memoryTitle">
+					<div class="gameHeader">
+						<div>
+							<h2 id="memoryTitle" style="margin: 0; font-size: 18px; letter-spacing: -0.01em;">Memory Match</h2>
+							<p class="help">Flip cards and find all matching pairs.</p>
+						</div>
+
+						<div class="controls">
+							<label class="help" for="mmDifficulty" style="margin-right: 2px;">Difficulty</label>
+							<select class="select" id="mmDifficulty" aria-label="Select memory match difficulty">
+								<option value="easy" selected>Easy (4×4)</option>
+								<option value="medium">Medium (4×6)</option>
+								<option value="hard">Hard (6×6)</option>
+							</select>
+							<button class="button" id="mmReset" type="button">New game</button>
+						</div>
+					</div>
+
+					<div class="memoryMeta">
+						<p class="status" id="mmStatus" aria-live="polite" aria-atomic="true">Loading…</p>
+						<div class="stats" aria-label="Memory match stats">
+							<span class="stat">Moves: <span id="mmMoves">0</span></span>
+							<span class="stat">Time: <span id="mmTime">0:00</span></span>
+							<span class="stat">Best: <span id="mmBest">—</span></span>
+						</div>
+					</div>
+
+					<div class="memoryBoard" id="mmBoard" style="--cols: 4" role="grid" aria-label="Memory match board"></div>
 				</div>
 			</section>
 		</main>
@@ -499,7 +625,8 @@
 						return true;
 					}
 					if (isDraw(board)) {
-						endGame("It’s a draw.", null);
+						endGame("It’s a draw. New game starting…", null);
+						window.setTimeout(startGame, 900);
 						return true;
 					}
 					return false;
@@ -643,6 +770,305 @@
 				difficultyEl.addEventListener("change", startGame);
 
 				startGame();
+
+				// -----------------
+				// Memory Match game
+				// -----------------
+				const mmDifficultyEl = document.getElementById("mmDifficulty");
+				const mmResetEl = document.getElementById("mmReset");
+				const mmStatusEl = document.getElementById("mmStatus");
+				const mmMovesEl = document.getElementById("mmMoves");
+				const mmTimeEl = document.getElementById("mmTime");
+				const mmBestEl = document.getElementById("mmBest");
+				const mmBoardEl = document.getElementById("mmBoard");
+
+				const MM_ICONS = [
+					"🍕",
+					"🍔",
+					"🍟",
+					"🍣",
+					"🍜",
+					"🌮",
+					"🍩",
+					"🍪",
+					"🍉",
+					"🍓",
+					"🍒",
+					"🍍",
+					"🥑",
+					"🌶️",
+					"🧁",
+					"🍫",
+					"⚽",
+					"🏀",
+					"🎸",
+					"🎧",
+					"🎮",
+					"🚀",
+					"🌙",
+					"⭐",
+					"🧠",
+					"💎",
+					"🔥",
+					"🌈",
+					"🧊",
+					"🍀",
+					"🦄",
+					"🐼",
+					"🐙",
+					"🐧",
+					"🦊",
+					"🦁",
+				];
+
+				let mmCards = [];
+				let mmFirst = null;
+				let mmSecond = null;
+				let mmLocked = false;
+				let mmMoves = 0;
+				let mmMatchedPairs = 0;
+				let mmTimer = null;
+				let mmStartTs = null;
+
+				function mmSetStatus(text) {
+					mmStatusEl.textContent = text;
+				}
+
+				function mmFormatSeconds(seconds) {
+					const minutes = Math.floor(seconds / 60);
+					const rem = seconds % 60;
+					return `${minutes}:${String(rem).padStart(2, "0")}`;
+				}
+
+				function mmStopTimer() {
+					if (mmTimer) {
+						clearInterval(mmTimer);
+						mmTimer = null;
+					}
+				}
+
+				function mmStartTimerIfNeeded() {
+					if (mmStartTs !== null) return;
+					mmStartTs = Date.now();
+					mmTimer = setInterval(() => {
+						const elapsed = Math.floor((Date.now() - mmStartTs) / 1000);
+						mmTimeEl.textContent = mmFormatSeconds(elapsed);
+					}, 250);
+				}
+
+				function mmShuffle(array) {
+					for (let i = array.length - 1; i > 0; i--) {
+						const j = Math.floor(Math.random() * (i + 1));
+						[array[i], array[j]] = [array[j], array[i]];
+					}
+					return array;
+				}
+
+				function mmGetConfig() {
+					const value = String(mmDifficultyEl.value || "easy");
+					if (value === "hard") return { cols: 6, rows: 6, key: "hard" };
+					if (value === "medium") return { cols: 6, rows: 4, key: "medium" };
+					return { cols: 4, rows: 4, key: "easy" };
+				}
+
+				function mmBestKey(configKey) {
+					return `mm_best_seconds_${configKey}`;
+				}
+
+				function mmLoadBest(configKey) {
+					const raw = localStorage.getItem(mmBestKey(configKey));
+					if (!raw) return null;
+					const value = Number(raw);
+					return Number.isFinite(value) ? value : null;
+				}
+
+				function mmSaveBest(configKey, seconds) {
+					const existing = mmLoadBest(configKey);
+					if (existing === null || seconds < existing) {
+						localStorage.setItem(mmBestKey(configKey), String(seconds));
+					}
+				}
+
+				function mmRenderBest(configKey) {
+					const best = mmLoadBest(configKey);
+					mmBestEl.textContent = best === null ? "—" : mmFormatSeconds(best);
+				}
+
+				function mmResetState() {
+					mmCards = [];
+					mmFirst = null;
+					mmSecond = null;
+					mmLocked = false;
+					mmMoves = 0;
+					mmMatchedPairs = 0;
+					mmStopTimer();
+					mmStartTs = null;
+					mmMovesEl.textContent = "0";
+					mmTimeEl.textContent = "0:00";
+				}
+
+				function mmBuildDeck(pairCount) {
+					const icons = MM_ICONS.slice(0, pairCount);
+					const deck = [];
+					for (let i = 0; i < icons.length; i++) {
+						deck.push({ id: `${i}-a`, value: icons[i], matched: false });
+						deck.push({ id: `${i}-b`, value: icons[i], matched: false });
+					}
+					return mmShuffle(deck);
+				}
+
+				function mmRenderBoard(config) {
+					mmBoardEl.style.setProperty("--cols", String(config.cols));
+					mmBoardEl.innerHTML = "";
+					const fragment = document.createDocumentFragment();
+					for (let i = 0; i < mmCards.length; i++) {
+						const card = mmCards[i];
+						const button = document.createElement("button");
+						button.type = "button";
+						button.className = "card";
+						button.setAttribute("data-index", String(i));
+						button.setAttribute("aria-label", "Memory card");
+
+						const back = document.createElement("span");
+						back.className = "face back";
+						back.textContent = "";
+
+						const front = document.createElement("span");
+						front.className = "face front";
+						front.textContent = card.value;
+
+						button.appendChild(back);
+						button.appendChild(front);
+						fragment.appendChild(button);
+					}
+					mmBoardEl.appendChild(fragment);
+				}
+
+				function mmSetCardUI(index, flipped) {
+					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
+					if (!(cardEl instanceof HTMLElement)) return;
+					cardEl.classList.toggle("flipped", flipped);
+					cardEl.classList.toggle("matched", Boolean(mmCards[index]?.matched));
+					(cardEl).toggleAttribute?.("disabled", false);
+				}
+
+				function mmUpdateAllCardInteractivity() {
+					const cardEls = Array.from(mmBoardEl.querySelectorAll(".card"));
+					for (let i = 0; i < cardEls.length; i++) {
+						const el = cardEls[i];
+						const idx = Number(el.getAttribute("data-index"));
+						const card = mmCards[idx];
+						const disabled =
+							mmLocked ||
+							!card ||
+							card.matched ||
+							(idx === mmFirst || idx === mmSecond);
+						el.disabled = disabled;
+						el.classList.toggle("matched", Boolean(card?.matched));
+					}
+				}
+
+				function mmFlip(index) {
+					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
+					if (!(cardEl instanceof HTMLElement)) return;
+					cardEl.classList.add("flipped");
+				}
+
+				function mmUnflip(index) {
+					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
+					if (!(cardEl instanceof HTMLElement)) return;
+					cardEl.classList.remove("flipped");
+				}
+
+				function mmMarkMatched(index) {
+					const cardEl = mmBoardEl.querySelector(`[data-index="${index}"]`);
+					if (!(cardEl instanceof HTMLElement)) return;
+					cardEl.classList.add("matched");
+					cardEl.disabled = true;
+				}
+
+				function mmCheckComplete(configKey, pairCount) {
+					if (mmMatchedPairs !== pairCount) return;
+					mmStopTimer();
+					const elapsed = mmStartTs ? Math.floor((Date.now() - mmStartTs) / 1000) : 0;
+					mmSaveBest(configKey, elapsed);
+					mmRenderBest(configKey);
+					mmSetStatus("You cleared it! Start a new game or change difficulty.");
+				}
+
+				function mmOnCardClick(event) {
+					const target = event.target;
+					if (!(target instanceof Element)) return;
+					const cardEl = target.closest(".card");
+					if (!cardEl) return;
+					const index = Number(cardEl.getAttribute("data-index"));
+					if (!Number.isFinite(index)) return;
+					if (mmLocked) return;
+					const card = mmCards[index];
+					if (!card || card.matched) return;
+					if (index === mmFirst || index === mmSecond) return;
+
+					mmStartTimerIfNeeded();
+					mmFlip(index);
+
+					if (mmFirst === null) {
+						mmFirst = index;
+						mmSetStatus("Pick a second card.");
+						mmUpdateAllCardInteractivity();
+						return;
+					}
+
+					mmSecond = index;
+					mmMoves++;
+					mmMovesEl.textContent = String(mmMoves);
+					mmLocked = true;
+					mmUpdateAllCardInteractivity();
+
+					const firstCard = mmCards[mmFirst];
+					const secondCard = mmCards[mmSecond];
+					const config = mmGetConfig();
+					const pairCount = (config.cols * config.rows) / 2;
+
+					window.setTimeout(() => {
+						if (firstCard.value === secondCard.value) {
+							firstCard.matched = true;
+							secondCard.matched = true;
+							mmMatchedPairs++;
+							mmMarkMatched(mmFirst);
+							mmMarkMatched(mmSecond);
+							mmSetStatus("Match! Keep going.");
+						} else {
+							mmUnflip(mmFirst);
+							mmUnflip(mmSecond);
+							mmSetStatus("Not a match. Try again.");
+						}
+
+						mmFirst = null;
+						mmSecond = null;
+						mmLocked = false;
+						mmUpdateAllCardInteractivity();
+						mmCheckComplete(config.key, pairCount);
+					}, 520);
+				}
+
+				function mmStartGame() {
+					mmResetState();
+					const config = mmGetConfig();
+					const totalCards = config.cols * config.rows;
+					const pairCount = totalCards / 2;
+					mmCards = mmBuildDeck(pairCount);
+					mmRenderBest(config.key);
+					mmRenderBoard(config);
+					mmSetStatus("Flip any card to start.");
+					mmLocked = false;
+					mmBoardEl.removeEventListener("click", mmOnCardClick);
+					mmBoardEl.addEventListener("click", mmOnCardClick);
+					mmUpdateAllCardInteractivity();
+				}
+
+				mmResetEl.addEventListener("click", mmStartGame);
+				mmDifficultyEl.addEventListener("change", mmStartGame);
+				mmStartGame();
 			})();
 		</script>
 	</body>
