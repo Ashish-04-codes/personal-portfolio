@@ -8,6 +8,7 @@
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&amp;display=swap" rel="stylesheet" />
 		<style>
 			:root {
 				--bg0: #070a12;
@@ -272,10 +273,6 @@
 				display: grid;
 				place-items: center;
 				text-shadow: 0 0 6px var(--neonGreen);
-			}
-
-			.tttCorner {
-				/* empty top-left corner */
 			}
 
 			.tttCell {
@@ -727,6 +724,121 @@
 				display: block;
 			}
 
+			/* ===================== */
+			/* iOS LIQUID GLASS LOOK */
+			/* ===================== */
+			body {
+				background:
+					radial-gradient(1000px 700px at 18% 8%, rgba(124, 92, 255, 0.34), transparent 60%),
+					radial-gradient(900px 700px at 92% 22%, rgba(34, 211, 238, 0.26), transparent 60%),
+					radial-gradient(800px 700px at 55% 110%, rgba(255, 110, 199, 0.16), transparent 55%),
+					linear-gradient(180deg, #060812 0%, #070b18 45%, #070a12 100%);
+			}
+
+			body::before {
+				content: "";
+				position: fixed;
+				inset: -20%;
+				background:
+					radial-gradient(closest-side at 30% 30%, rgba(255, 255, 255, 0.08), transparent 55%),
+					radial-gradient(closest-side at 70% 60%, rgba(255, 255, 255, 0.06), transparent 60%);
+				filter: blur(18px);
+				transform: translateZ(0);
+				animation: floatGlow 14s ease-in-out infinite alternate;
+				pointer-events: none;
+				z-index: 0;
+			}
+
+			@keyframes floatGlow {
+				from {
+					transform: translate3d(-1.2%, -0.6%, 0) scale(1);
+					opacity: 0.85;
+				}
+				to {
+					transform: translate3d(1.2%, 0.6%, 0) scale(1.02);
+					opacity: 1;
+				}
+			}
+
+			.wrap,
+			.hero {
+				position: relative;
+				z-index: 1;
+			}
+
+			.hero {
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.05));
+				backdrop-filter: blur(22px) saturate(140%);
+				-webkit-backdrop-filter: blur(22px) saturate(140%);
+				border-radius: 24px;
+				box-shadow:
+					0 26px 90px rgba(0, 0, 0, 0.55),
+					inset 0 1px 0 rgba(255, 255, 255, 0.20);
+				overflow: hidden;
+			}
+
+			.hero::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(900px 420px at 18% 18%, rgba(255, 255, 255, 0.16), transparent 60%),
+					radial-gradient(700px 520px at 90% 0%, rgba(34, 211, 238, 0.14), transparent 55%),
+					radial-gradient(720px 520px at 0% 110%, rgba(124, 92, 255, 0.12), transparent 55%);
+				mix-blend-mode: screen;
+				opacity: 0.9;
+				pointer-events: none;
+			}
+
+			.hero::after {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background: linear-gradient(
+					135deg,
+					rgba(255, 255, 255, 0.18),
+					transparent 35%,
+					transparent 65%,
+					rgba(255, 255, 255, 0.06)
+				);
+				opacity: 0.6;
+				pointer-events: none;
+			}
+
+			.pill {
+				border: 1px solid rgba(255, 255, 255, 0.18);
+				background: rgba(255, 255, 255, 0.06);
+				backdrop-filter: blur(14px);
+			}
+
+			.tile {
+				position: relative;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+				backdrop-filter: blur(18px) saturate(150%);
+				-webkit-backdrop-filter: blur(18px) saturate(150%);
+				box-shadow:
+					0 18px 50px rgba(0, 0, 0, 0.35),
+					inset 0 1px 0 rgba(255, 255, 255, 0.18);
+				overflow: hidden;
+			}
+
+			.tile::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(160px 90px at 22% 18%, rgba(255, 255, 255, 0.22), transparent 60%),
+					radial-gradient(160px 120px at 85% 105%, rgba(124, 92, 255, 0.12), transparent 60%);
+				opacity: 0.9;
+				pointer-events: none;
+			}
+
+			.num {
+				text-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+			}
+
 			@media (max-width: 760px) {
 				.tttContainer,
 				.snakeContainer {
@@ -765,168 +877,142 @@
 					font-size: 28px;
 				}
 			}
+
+			/* ====================================================== */
+			/* COMING SOON (match provided reference countdown design) */
+			/* ====================================================== */
+			.comingPage {
+				background: #fbf7ef;
+				color: #111;
+				font-family: ui-serif, "Playfair Display", Georgia, "Times New Roman", serif;
+				min-height: 100vh;
+				display: flex;
+				align-items: flex-end;
+				justify-content: flex-end;
+				padding: clamp(24px, 5vw, 64px);
+			}
+
+			.comingPage::before {
+				content: none !important;
+			}
+
+			.comingPage .wrap {
+				width: auto;
+				margin: 0;
+			}
+
+			.comingPage .hero {
+				border: none;
+				background: transparent;
+				backdrop-filter: none;
+				-webkit-backdrop-filter: none;
+				border-radius: 0;
+				padding: 0;
+				box-shadow: none;
+				overflow: visible;
+				display: grid;
+				justify-items: end;
+				align-content: end;
+				gap: clamp(14px, 2vw, 22px);
+			}
+
+			.comingPage .hero::before,
+			.comingPage .hero::after {
+				content: none !important;
+			}
+
+			.srOnly {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+
+			.comingPage .countdown {
+				display: flex;
+				grid-template-columns: none;
+				gap: clamp(26px, 6vw, 110px);
+				align-items: baseline;
+				justify-content: flex-end;
+				width: auto;
+			}
+
+			.comingPage .tile {
+				border: none;
+				background: transparent;
+				border-radius: 0;
+				padding: 0;
+				text-align: center;
+				box-shadow: none;
+				backdrop-filter: none;
+				-webkit-backdrop-filter: none;
+				display: flex;
+				align-items: baseline;
+				overflow: visible;
+			}
+
+			.comingPage .tile::before {
+				content: none !important;
+			}
+
+			.comingPage .num {
+				font-family: "Playfair Display", Georgia, serif;
+				font-weight: 400;
+				font-variant-numeric: lining-nums tabular-nums;
+				letter-spacing: -0.02em;
+				line-height: 0.82;
+				font-size: clamp(92px, 18vw, 240px);
+				color: transparent;
+				-webkit-text-stroke: 2px rgba(170, 170, 170, 0.95);
+				text-shadow: none;
+			}
+
+			.comingPage .unit {
+				font-family: "Playfair Display", Georgia, serif;
+				font-weight: 400;
+				line-height: 1;
+				font-size: clamp(18px, 3.2vw, 34px);
+				margin-left: clamp(10px, 1.6vw, 18px);
+				color: transparent;
+				-webkit-text-stroke: 1.6px rgba(170, 170, 170, 0.95);
+				transform: translateY(-0.08em);
+			}
+
+			.comingPage .secondsTile {
+				display: flex;
+			}
+
+			@media (max-width: 760px) {
+				.comingPage .countdown {
+					flex-wrap: wrap;
+					justify-content: center;
+					gap: 22px 34px;
+				}
+			}
 		</style>
 	</head>
-	<body>
+	<body class="comingPage">
 		<main class="wrap">
 			<section class="hero" aria-labelledby="title">
-				<div class="pill" aria-hidden="true">
-					<span class="dot"></span>
-					<span>Launching soon</span>
-				</div>
+				<h1 class="srOnly" id="title">Coming soon</h1>
 
-				<h1 id="title">Ashish's Portfolio</h1>
-				<p class="sub">
-					I'm building this space to showcase my projects, experience, and writing.
-					It'll be live at the end of next month.
-				</p>
-
-				<div class="launch">
-					<p class="liveLine" id="launchLine">
-						This portfolio will be live on <span class="dateStrong" id="targetDate">—</span>.
-					</p>
-
-					<div class="countdown" aria-live="polite" aria-atomic="true">
-						<div class="tile">
-							<div class="num" id="days">—</div>
-							<div class="label">Days</div>
-						</div>
-						<div class="tile">
-							<div class="num" id="hours">—</div>
-							<div class="label">Hours</div>
-						</div>
-						<div class="tile">
-							<div class="num" id="minutes">—</div>
-							<div class="label">Minutes</div>
-						</div>
-						<div class="tile">
-							<div class="num" id="seconds">—</div>
-							<div class="label">Seconds</div>
-						</div>
+				<div class="countdown" aria-live="polite" aria-atomic="true">
+					<div class="tile">
+						<span class="num" id="days">—</span><span class="unit">d</span>
 					</div>
-				</div>
-
-				<hr class="divider" />
-
-				<div class="tabs" id="gameTabs" aria-label="Game selector">
-					<button class="tabButton" type="button" data-view="ttt" aria-pressed="true">Tic‑Tac‑Toe</button>
-					<button class="tabButton" type="button" data-view="snake" aria-pressed="false">Snake</button>
-				</div>
-
-				<!-- TTT Game Panel -->
-				<div class="gamePanel active" id="tttPanel" data-game="ttt">
-					<div class="tttContainer">
-						<div class="tttMain">
-							<h2 class="tttTitle">TIC - TAC - TOE</h2>
-
-							<div class="tttControls">
-								<select class="select" id="tttDifficulty" aria-label="AI Difficulty">
-									<option value="easy">EASY</option>
-									<option value="medium" selected>MEDIUM</option>
-									<option value="hard">HARD</option>
-								</select>
-								<button class="button" id="tttReset" type="button">NEW GAME</button>
-							</div>
-
-							<p class="tttStatus" id="tttStatus">Loading…</p>
-
-							<div class="tttBoardWrap">
-								<div class="tttBoard" id="tttBoard" role="grid" aria-label="Tic tac toe board">
-									<div class="tttCorner"></div>
-									<div class="tttColLabel">A</div>
-									<div class="tttColLabel">B</div>
-									<div class="tttColLabel">C</div>
-
-									<div class="tttRowLabel">1</div>
-									<button class="tttCell" type="button" data-index="0" data-pos="A1" aria-label="A1"></button>
-									<button class="tttCell" type="button" data-index="1" data-pos="B1" aria-label="B1"></button>
-									<button class="tttCell" type="button" data-index="2" data-pos="C1" aria-label="C1"></button>
-
-									<div class="tttRowLabel">2</div>
-									<button class="tttCell" type="button" data-index="3" data-pos="A2" aria-label="A2"></button>
-									<button class="tttCell" type="button" data-index="4" data-pos="B2" aria-label="B2"></button>
-									<button class="tttCell" type="button" data-index="5" data-pos="C2" aria-label="C2"></button>
-
-									<div class="tttRowLabel">3</div>
-									<button class="tttCell" type="button" data-index="6" data-pos="A3" aria-label="A3"></button>
-									<button class="tttCell" type="button" data-index="7" data-pos="B3" aria-label="B3"></button>
-									<button class="tttCell" type="button" data-index="8" data-pos="C3" aria-label="C3"></button>
-								</div>
-							</div>
-
-							<div class="tttMoveHistory">
-								<div class="tttMoveCol">
-									<div class="tttMoveColTitle X">X MOVE</div>
-									<ul class="tttMoveList" id="tttMovesX"></ul>
-								</div>
-								<div class="tttMoveCol">
-									<div class="tttMoveColTitle O">O MOVE</div>
-									<ul class="tttMoveList" id="tttMovesO"></ul>
-								</div>
-							</div>
-						</div>
-
-						<aside class="tttSidebar">
-							<h3 class="tttSidebarTitle">LEADERBOARD</h3>
-							<p class="tttUserStats" style="margin-bottom:6px;color:var(--neonGreen);" id="tttLeaderboardMode">EASY MODE</p>
-							<ul class="tttLeaderboard" id="tttLeaderboard">
-								<li><span class="rank">—</span><span class="name">No data yet</span><span class="wins"></span></li>
-							</ul>
-
-							<div class="tttUserWrap">
-								<label class="tttUserLabel" for="tttUsername">YOUR NAME</label>
-								<input class="tttUserInput" type="text" id="tttUsername" maxlength="12" placeholder="Enter name…" />
-								<p class="tttUserStats" id="tttUserStats">EASY: 0 | MED: 0 | HARD: 0</p>
-							</div>
-						</aside>
+					<div class="tile">
+						<span class="num" id="hours">—</span><span class="unit">h</span>
 					</div>
-				</div>
-
-				<!-- Snake Game Panel -->
-				<div class="gamePanel" id="snakePanel" data-game="snake">
-					<div class="snakeContainer">
-						<div class="snakeMain">
-							<h2 class="snakeTitle">S N A K E</h2>
-
-							<div class="snakeControls">
-								<select class="select" id="snakeSpeed" aria-label="Snake speed">
-									<option value="slow">SLOW</option>
-									<option value="normal" selected>NORMAL</option>
-									<option value="fast">FAST</option>
-								</select>
-								<button class="button" id="snakeToggle" type="button">START</button>
-								<button class="button" id="snakeReset" type="button">NEW GAME</button>
-							</div>
-
-							<p class="snakeStatus" id="snakeStatus" aria-live="polite" aria-atomic="true">Loading…</p>
-							<p class="snakeStats" id="snakeStats">SCORE: 0 • HIGH: 0</p>
-
-							<div class="snakeWrap">
-								<canvas class="snakeCanvas" id="snakeCanvas" width="360" height="360" aria-label="Snake game canvas"></canvas>
-								<p class="snakeHelp">ARROW KEYS / WASD TO PLAY</p>
-								<div class="dpad" aria-label="Snake controls">
-									<button class="button blank" type="button" aria-hidden="true">.</button>
-									<button class="button" type="button" data-sdir="up">▲</button>
-									<button class="button blank" type="button" aria-hidden="true">.</button>
-									<button class="button" type="button" data-sdir="left">◀</button>
-									<button class="button" type="button" data-sdir="down">▼</button>
-									<button class="button" type="button" data-sdir="right">▶</button>
-								</div>
-							</div>
-						</div>
-
-						<aside class="snakeSidebar">
-							<h3 class="snakeSidebarTitle">HIGH SCORES</h3>
-							<ul class="snakeLeaderboard" id="snakeLeaderboard">
-								<li><span class="rank">—</span><span class="name">No data yet</span><span class="score"></span></li>
-							</ul>
-
-							<div class="snakeUserWrap">
-								<label class="snakeUserLabel" for="snakeUsername">YOUR NAME</label>
-								<input class="snakeUserInput" type="text" id="snakeUsername" maxlength="12" placeholder="Enter name…" />
-								<p class="snakeUserStats" id="snakeUserStats">Best: 0</p>
-							</div>
-						</aside>
+					<div class="tile">
+						<span class="num" id="minutes">—</span><span class="unit">m</span>
+					</div>
+					<div class="tile secondsTile" aria-hidden="true">
+						<span class="num" id="seconds">—</span><span class="unit">s</span>
 					</div>
 				</div>
 			</section>
@@ -941,24 +1027,12 @@
 				const hoursEl = document.getElementById("hours");
 				const minutesEl = document.getElementById("minutes");
 				const secondsEl = document.getElementById("seconds");
-				const targetDateEl = document.getElementById("targetDate");
-				const launchLineEl = document.getElementById("launchLine");
 
 				function getEndOfNextMonth(now) {
 					return new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
 				}
 
 				const target = getEndOfNextMonth(new Date());
-
-				const formattedTarget = new Intl.DateTimeFormat(undefined, {
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "2-digit",
-					minute: "2-digit",
-				}).format(target);
-				targetDateEl.textContent = formattedTarget;
 
 				function pad2(value) {
 					return String(value).padStart(2, "0");
@@ -969,11 +1043,10 @@
 					const diffMs = target.getTime() - now.getTime();
 
 					if (diffMs <= 0) {
-						daysEl.textContent = "00";
+						daysEl.textContent = "0";
 						hoursEl.textContent = "00";
 						minutesEl.textContent = "00";
 						secondsEl.textContent = "00";
-						launchLineEl.textContent = "This portfolio is live.";
 						clearInterval(countdownTimer);
 						return;
 					}
@@ -984,7 +1057,7 @@
 					const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
 					const seconds = totalSeconds % 60;
 
-					daysEl.textContent = pad2(days);
+					daysEl.textContent = String(days);
 					hoursEl.textContent = pad2(hours);
 					minutesEl.textContent = pad2(minutes);
 					secondsEl.textContent = pad2(seconds);
@@ -992,6 +1065,8 @@
 
 				tick();
 				const countdownTimer = setInterval(tick, 1000);
+
+				return; // keep any leftover removed-game code from running
 
 				// ===================
 				// Game Tabs
