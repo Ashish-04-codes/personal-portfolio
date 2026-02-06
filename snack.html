@@ -1,0 +1,4836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNAKE - Retro Arcade</title>
+    
+    <!-- PeerJS for multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <style>
+        /* 
+         * VISUAL STYLE BREAKDOWN
+         * ======================
+         * Color Palette: Inspired by classic Game Boy with modern contrast
+         * - Background: Deep navy (#0f0f23) - reduces eye strain
+         * - Grid: Subtle lines (#1a1a2e) - visible but not distracting
+         * - Snake Head: Bright lime (#00ff41) - instant visibility
+         * - Snake Body: Darker green (#00b330) - clear head distinction
+         * - Food: Hot red (#ff0040) - high contrast against greens
+         * - UI Text: Off-white (#e0e0e0) - readable without harsh white
+         * 
+         * Grid: 20x20 cells at 20px each = 400x400 logical pixels
+         * Pixel Scale: 1x base, CSS handles responsive scaling
+         */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a14;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px 0;
+            font-family: 'Courier New', monospace;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            padding: 8px 0;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 10px #00ff4166;
+            letter-spacing: 4px;
+        }
+        
+        .score-display {
+            font-size: 20px;
+            color: #ffcc00;
+            text-shadow: 0 0 8px #ffcc0044;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            /* Pixel-perfect rendering: disable smoothing via CSS */
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: #0f0f23;
+            border: 3px solid #00ff41;
+            box-shadow: 
+                0 0 20px #00ff4133,
+                inset 0 0 60px #00000066;
+            /* Pixel-perfect: no antialiasing */
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        /* Optional CRT scanline effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1) 0px,
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            opacity: 0.3;
+        }
+        
+        .controls-info {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 8px;
+        }
+        
+        .controls-info kbd {
+            background: #1a1a2e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            color: #888;
+        }
+        
+        /* Mobile touch controls */
+        .touch-controls {
+            display: none;
+            margin-top: 16px;
+            gap: 8px;
+        }
+        
+        .touch-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .touch-btn {
+            width: 60px;
+            height: 60px;
+            background: #1a1a2e;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .touch-btn:active {
+            background: #00ff4133;
+        }
+        
+        .touch-btn.spacer {
+            visibility: hidden;
+        }
+        
+        /* Difficulty selection */
+        .difficulty-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 16px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            color: #888;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        
+        .difficulty-btn:hover {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+        
+        .difficulty-btn.active {
+            background: #00ff4122;
+            border-color: #00ff41;
+            color: #00ff41;
+            box-shadow: 0 0 10px #00ff4133;
+        }
+        
+        .difficulty-btn.easy {
+            --accent: #00ff41;
+        }
+        
+        .difficulty-btn.medium {
+            --accent: #ffcc00;
+        }
+        
+        .difficulty-btn.hard {
+            --accent: #ff6600;
+        }
+        
+        .difficulty-btn.insane {
+            --accent: #ff0040;
+        }
+        
+        .difficulty-btn.active.easy {
+            border-color: #00ff41;
+            color: #00ff41;
+            background: #00ff4122;
+        }
+        
+        .difficulty-btn.active.medium {
+            border-color: #ffcc00;
+            color: #ffcc00;
+            background: #ffcc0022;
+        }
+        
+        .difficulty-btn.active.hard {
+            border-color: #ff6600;
+            color: #ff6600;
+            background: #ff660022;
+        }
+        
+        .difficulty-btn.active.insane {
+            border-color: #ff0040;
+            color: #ff0040;
+            background: #ff004022;
+        }
+        
+        .level-indicator {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Stats bar below header */
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 400px;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+        
+        .high-score {
+            color: #ff6600;
+        }
+        
+        .speed-indicator {
+            color: #00b330;
+        }
+        
+        .combo-display {
+            color: #ff0040;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .combo-display.active {
+            opacity: 1;
+            animation: comboPulse 0.3s ease-out;
+        }
+        
+        @keyframes comboPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Sound toggle button */
+        .sound-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            color: #00ff41;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .sound-toggle:hover {
+            border-color: #00ff41;
+        }
+        
+        .sound-toggle.muted {
+            color: #ff0040;
+            border-color: #ff0040;
+        }
+        
+        /* Screen shake animation */
+        .canvas-wrapper.shake {
+            animation: screenShake 0.4s ease-out;
+        }
+        
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-4px, -2px) rotate(-1deg); }
+            20% { transform: translate(4px, 2px) rotate(1deg); }
+            30% { transform: translate(-4px, 2px) rotate(-1deg); }
+            40% { transform: translate(4px, -2px) rotate(1deg); }
+            50% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+            60% { transform: translate(2px, -2px) rotate(0.5deg); }
+            70% { transform: translate(-2px, 0) rotate(0deg); }
+            80% { transform: translate(2px, 0) rotate(0deg); }
+            90% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        /* Countdown overlay */
+        .countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 15, 35, 0.85);
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .countdown-number {
+            font-size: 80px;
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41;
+            animation: countdownPop 0.5s ease-out;
+        }
+        
+        .countdown-number.go {
+            font-size: 48px;
+            color: #ffcc00;
+            text-shadow: 0 0 20px #ffcc00;
+        }
+        
+        @keyframes countdownPop {
+            0% { transform: scale(2); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @media (hover: none) and (pointer: coarse) {
+            .touch-controls {
+                display: flex;
+                flex-direction: column;
+            }
+            .controls-info {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 440px) {
+            #gameCanvas {
+                width: 320px;
+                height: 320px;
+            }
+            .header {
+                width: 320px;
+            }
+            .title {
+                font-size: 18px;
+            }
+            .stats-bar {
+                width: 320px;
+                font-size: 10px;
+            }
+            .mode-selector, .theme-selector {
+                flex-wrap: wrap;
+                width: 320px;
+            }
+        }
+        
+        /* ==================== GAME MODE SELECTOR ==================== */
+        .mode-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+            max-width: 420px;
+            justify-content: center;
+        }
+        
+        .mode-btn {
+            padding: 6px 10px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            color: #888;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        
+        .mode-btn:hover {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+        
+        .mode-btn.active {
+            background: #00ff4122;
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+        
+        /* ==================== THEME SELECTOR ==================== */
+        .theme-selector {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .theme-btn {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #333;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .theme-btn.active {
+            border-color: #fff;
+            box-shadow: 0 0 8px currentColor;
+        }
+        
+        .theme-btn.retro { background: linear-gradient(135deg, #00ff41, #00b330); }
+        .theme-btn.gameboy { background: linear-gradient(135deg, #9bbc0f, #306230); }
+        .theme-btn.c64 { background: linear-gradient(135deg, #4040e0, #7c7cfc); }
+        .theme-btn.amber { background: linear-gradient(135deg, #ffb000, #805800); }
+        .theme-btn.neon { background: linear-gradient(135deg, #ff00ff, #00ffff); }
+        .theme-btn.grayscale { background: linear-gradient(135deg, #ffffff, #666666); }
+        
+        /* ==================== LEVEL & TIMER DISPLAY ==================== */
+        .game-info-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            font-size: 11px;
+            color: #888;
+            padding: 4px 0;
+        }
+        
+        .level-display {
+            color: #00ff41;
+        }
+        
+        .timer-display {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .timer-display.warning {
+            color: #ff6600;
+            animation: timerBlink 0.5s infinite;
+        }
+        
+        .timer-display.critical {
+            color: #ff0040;
+            animation: timerBlink 0.25s infinite;
+        }
+        
+        @keyframes timerBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* ==================== POWER-UP INDICATORS ==================== */
+        .powerup-bar {
+            display: flex;
+            gap: 8px;
+            height: 24px;
+            align-items: center;
+        }
+        
+        .powerup-indicator {
+            display: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            animation: powerupPulse 1s infinite;
+        }
+        
+        .powerup-indicator.active {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .powerup-indicator.ghost {
+            background: #8800ff44;
+            color: #cc88ff;
+            border: 1px solid #8800ff;
+        }
+        
+        .powerup-indicator.speed {
+            background: #ffcc0044;
+            color: #ffcc00;
+            border: 1px solid #ffcc00;
+        }
+        
+        .powerup-indicator.slow {
+            background: #00ccff44;
+            color: #00ccff;
+            border: 1px solid #00ccff;
+        }
+        
+        .powerup-indicator.multiplier {
+            background: #ff660044;
+            color: #ff9900;
+            border: 1px solid #ff6600;
+        }
+        
+        @keyframes powerupPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* ==================== ACCESSIBILITY TOGGLE ==================== */
+        .accessibility-toggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 36px;
+            height: 36px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .accessibility-toggle:hover {
+            border-color: #00ff41;
+            color: #00ff41;
+        }
+        
+        .accessibility-toggle.active {
+            border-color: #ffcc00;
+            color: #ffcc00;
+            background: #ffcc0022;
+        }
+        
+        /* ==================== SURVIVAL MODE WALLS ==================== */
+        .survival-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0040;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0040;
+            animation: warningPulse 0.5s infinite;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        
+        .survival-warning.active {
+            display: block;
+        }
+        
+        @keyframes warningPulse {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        /* ==================== SPECIAL MODE BUTTONS ==================== */
+        .mode-btn.boss {
+            background: linear-gradient(135deg, #ff4040, #8b0000);
+            border-color: #ff4040;
+            color: #fff;
+        }
+        .mode-btn.boss:hover, .mode-btn.boss.active {
+            background: linear-gradient(135deg, #ff6060, #aa2222);
+            box-shadow: 0 0 10px #ff4040;
+        }
+        
+        .mode-btn.ghost {
+            background: linear-gradient(135deg, #9966ff, #663399);
+            border-color: #9966ff;
+            color: #fff;
+        }
+        .mode-btn.ghost:hover, .mode-btn.ghost.active {
+            background: linear-gradient(135deg, #aa88ff, #7744aa);
+            box-shadow: 0 0 10px #9966ff;
+        }
+        
+        .mode-btn.mp {
+            background: linear-gradient(135deg, #00bfff, #0066cc);
+            border-color: #00bfff;
+            color: #fff;
+        }
+        .mode-btn.mp:hover, .mode-btn.mp.active {
+            background: linear-gradient(135deg, #33ccff, #0088dd);
+            box-shadow: 0 0 10px #00bfff;
+        }
+        
+        /* ==================== MULTIPLAYER PANEL ==================== */
+        .multiplayer-panel {
+            background: #1a1a2e;
+            border: 2px solid #00bfff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 400px;
+        }
+        
+        .mp-status {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            padding: 4px 8px;
+            background: #0d0d15;
+            border-radius: 4px;
+        }
+        
+        .mp-status.connected {
+            color: #00ff41;
+            background: #00ff4122;
+        }
+        
+        .mp-status.waiting {
+            color: #ffcc00;
+            background: #ffcc0022;
+        }
+        
+        .mp-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .mp-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #00bfff, #0066cc);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mp-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #00bfff;
+        }
+        
+        .mp-btn.small {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        
+        .mp-code-container {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .mp-code-input {
+            background: #0d0d15;
+            border: 2px solid #333;
+            border-radius: 4px;
+            color: #00bfff;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 6px 10px;
+            text-align: center;
+            width: 120px;
+            text-transform: uppercase;
+        }
+        
+        .mp-code-input:focus {
+            outline: none;
+            border-color: #00bfff;
+        }
+        
+        .mp-game-code {
+            text-align: center;
+            color: #00ff41;
+            font-size: 14px;
+            padding: 8px;
+            background: #00ff4122;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .mp-game-code span {
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        
+        .mp-opponent {
+            text-align: center;
+            color: #ff6666;
+            font-size: 12px;
+            padding: 6px;
+            background: #ff666622;
+            border-radius: 4px;
+        }
+        
+        /* ==================== SKIN SELECTOR ==================== */
+        .skin-selector {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        
+        .skin-toggle {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #ff9900, #cc6600);
+            border: 2px solid #ff9900;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .skin-toggle:hover {
+            box-shadow: 0 0 10px #ff9900;
+        }
+        
+        .skin-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #1a1a2e;
+            border: 2px solid #ff9900;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 4px;
+            z-index: 100;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            min-width: 220px;
+        }
+        
+        .skin-option {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .skin-option:hover {
+            transform: scale(1.1);
+            border-color: #ff9900;
+        }
+        
+        .skin-option.active {
+            border-color: #00ff41;
+            box-shadow: 0 0 8px #00ff41;
+        }
+        
+        .skin-option.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .skin-option.locked::after {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+        }
+        
+        .skin-option canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* ==================== BOSS HEALTH BAR ==================== */
+        .boss-health-container {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .boss-name {
+            color: #ff4040;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff4040;
+            min-width: 60px;
+        }
+        
+        .boss-health-bar {
+            flex: 1;
+            height: 16px;
+            background: #1a1a2e;
+            border: 2px solid #ff4040;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .boss-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4040, #ff6666);
+            width: 100%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px #ff4040 inset;
+        }
+        
+        /* ==================== UNLOCK NOTIFICATION ==================== */
+        .unlock-notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700, #ff9900);
+            padding: 16px 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: unlockPop 0.5s ease-out;
+            z-index: 20;
+            box-shadow: 0 0 30px #ffd700;
+        }
+        
+        .unlock-icon {
+            font-size: 28px;
+            animation: bounce 0.5s ease infinite;
+        }
+        
+        .unlock-text {
+            color: #1a1a2e;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        @keyframes unlockPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        
+        /* ==================== POWERUP BAR UPDATES ==================== */
+        #powerUpBar {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .powerup-indicator {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            display: none;
+        }
+        
+        .powerup-indicator.active {
+            display: inline-block;
+            animation: powerupPulse 1s infinite;
+        }
+        
+        .powerup-indicator.ghost { background: #00ff4144; color: #00ff41; }
+        .powerup-indicator.speed { background: #ffcc0044; color: #ffcc00; }
+        .powerup-indicator.slow { background: #00bfff44; color: #00bfff; }
+        .powerup-indicator.multiplier { background: #ff00ff44; color: #ff00ff; }
+        .powerup-indicator.magnet { background: #ff990044; color: #ff9900; }
+        .powerup-indicator.shield { background: #0088ff44; color: #00aaff; }
+        .powerup-indicator.freeze { background: #66ffff44; color: #66ffff; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="title">SNAKE</div>
+            <div class="score-display">SCORE: <span id="score">0</span></div>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <span class="high-score">BEST: <span id="highScore">0</span></span>
+            <span class="combo-display" id="comboDisplay">COMBO x1</span>
+            <span class="speed-indicator">SPEED: <span id="speedLevel">1</span></span>
+        </div>
+        
+        <!-- Game Mode Selection -->
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="classic">Classic</button>
+            <button class="mode-btn" data-mode="timed">Time Attack</button>
+            <button class="mode-btn" data-mode="survival">Survival</button>
+            <button class="mode-btn" data-mode="levels">Levels</button>
+            <button class="mode-btn boss" data-mode="boss">🐍 Boss</button>
+            <button class="mode-btn ghost" data-mode="ghost">👻 Ghost</button>
+            <button class="mode-btn mp" data-mode="multiplayer">🌐 Versus</button>
+        </div>
+        
+        <!-- Multiplayer Panel (hidden by default) -->
+        <div class="multiplayer-panel" id="multiplayerPanel" style="display: none;">
+            <div class="mp-status" id="mpStatus">Not Connected</div>
+            <div class="mp-buttons" id="mpButtons">
+                <button class="mp-btn" id="mpCreateBtn">Create Game</button>
+                <button class="mp-btn" id="mpJoinBtn">Join Game</button>
+            </div>
+            <div class="mp-code-container" id="mpCodeContainer" style="display: none;">
+                <input type="text" class="mp-code-input" id="mpCodeInput" placeholder="Enter code..." maxlength="10">
+                <button class="mp-btn small" id="mpConfirmBtn">OK</button>
+            </div>
+            <div class="mp-game-code" id="mpGameCode" style="display: none;">
+                Code: <span id="mpCodeDisplay"></span>
+                <button class="mp-btn small" id="mpCopyBtn">📋</button>
+            </div>
+            <div class="mp-opponent" id="mpOpponent" style="display: none;">
+                Opponent: <span id="opponentScore">0</span> pts
+            </div>
+        </div>
+        
+        <!-- Skin Selector Panel -->
+        <div class="skin-selector" id="skinSelector">
+            <button class="skin-toggle" id="skinToggle">🎨 Skins</button>
+            <div class="skin-dropdown" id="skinDropdown" style="display: none;">
+                <!-- Skins will be populated by JS -->
+            </div>
+        </div>
+        
+        <!-- Boss Health Bar (hidden by default) -->
+        <div class="boss-health-container" id="bossHealthContainer" style="display: none;">
+            <span class="boss-name" id="bossName">BOSS</span>
+            <div class="boss-health-bar">
+                <div class="boss-health-fill" id="bossHealthFill"></div>
+            </div>
+        </div>
+        
+        <!-- Theme Selection -->
+        <div class="theme-selector">
+            <button class="theme-btn retro active" data-theme="retro" title="Retro"></button>
+            <button class="theme-btn gameboy" data-theme="gameboy" title="Game Boy"></button>
+            <button class="theme-btn c64" data-theme="c64" title="C64"></button>
+            <button class="theme-btn amber" data-theme="amber" title="Amber CRT"></button>
+            <button class="theme-btn neon" data-theme="neon" title="Neon"></button>
+            <button class="theme-btn grayscale" data-theme="grayscale" title="Colorblind"></button>
+        </div>
+        
+        <!-- Difficulty Selection -->
+        <div class="difficulty-selector">
+            <button class="difficulty-btn easy active" data-difficulty="easy">Easy</button>
+            <button class="difficulty-btn medium" data-difficulty="medium">Medium</button>
+            <button class="difficulty-btn hard" data-difficulty="hard">Hard</button>
+            <button class="difficulty-btn insane" data-difficulty="insane">Insane</button>
+        </div>
+        
+        <!-- Level & Timer Info -->
+        <div class="game-info-bar">
+            <span class="level-display">LEVEL: <span id="levelDisplay">1</span></span>
+            <div class="powerup-bar" id="powerUpBar">
+                <!-- Power-up indicators added dynamically -->
+            </div>
+            <span class="timer-display" id="timerDisplay" style="display: none;">TIME: 60</span>
+        </div>
+        
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <div class="scanlines"></div>
+            <button class="accessibility-toggle" id="accessibilityToggle" title="Colorblind Mode">👁</button>
+            <button class="sound-toggle" id="soundToggle" title="Toggle Sound">🔊</button>
+            <div class="countdown-overlay" id="countdownOverlay" style="display: none;">
+                <span class="countdown-number" id="countdownNumber">3</span>
+            </div>
+            <div class="survival-warning" id="survivalWarning" style="display: none;">⚠ WALLS CLOSING IN!</div>
+            <div class="unlock-notification" id="unlockNotification" style="display: none;">
+                <span class="unlock-icon">🎉</span>
+                <span class="unlock-text" id="unlockText">New skin unlocked!</span>
+            </div>
+        </div>
+        
+        <div class="controls-info">
+            <kbd>WASD</kbd> or <kbd>↑↓←→</kbd> to move &nbsp;|&nbsp; 
+            <kbd>SPACE</kbd> to pause &nbsp;|&nbsp; 
+            <kbd>ENTER</kbd> to restart &nbsp;|&nbsp;
+            <kbd>M</kbd> to mute &nbsp;|&nbsp;
+            Swipe on mobile
+        </div>
+        
+        <!-- Mobile touch controls -->
+        <div class="touch-controls">
+            <div class="touch-row">
+                <button class="touch-btn spacer"></button>
+                <button class="touch-btn" data-dir="up">▲</button>
+                <button class="touch-btn spacer"></button>
+            </div>
+            <div class="touch-row">
+                <button class="touch-btn" data-dir="left">◀</button>
+                <button class="touch-btn" data-dir="down">▼</button>
+                <button class="touch-btn" data-dir="right">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /**
+     * ============================================================================
+     * RETRO SNAKE - Production-Quality Implementation
+     * ============================================================================
+     * 
+     * HIGH-LEVEL ARCHITECTURE
+     * -----------------------
+     * 1. GameConfig: Centralized constants (grid size, speeds, colors)
+     * 2. AudioManager: Handles 8-bit sound synthesis via Web Audio API
+     * 3. InputManager: Keyboard/touch input with buffering system
+     * 4. GameState: Pure game logic (snake, food, collision, scoring)
+     * 5. Renderer: Canvas drawing, animations, visual effects
+     * 6. GameLoop: Fixed-timestep update with interpolated rendering
+     * 7. Game: Main controller orchestrating all systems
+     * 
+     * CORE GAMEPLAY LOOP
+     * ------------------
+     * 1. Process buffered input (direction change commands)
+     * 2. Fixed update: Move snake, check collisions, handle food
+     * 3. Variable render: Draw current state with any interpolation
+     * 4. Repeat at ~60fps with fixed logic tick rate
+     * 
+     * KEY DESIGN DECISIONS
+     * --------------------
+     * - Input Buffering: Stores last 2 inputs to prevent dropped commands
+     *   during fast direction changes. Essential for responsive game feel.
+     * 
+     * - Fixed Timestep: Logic runs at consistent intervals regardless of
+     *   frame rate. Prevents speed variations on different devices.
+     * 
+     * - State Machine: Clear transitions between BOOT→PLAYING→PAUSED/GAME_OVER
+     *   Each state has distinct update and render behavior.
+     * 
+     * - No Global Pollution: All state encapsulated in classes. Game instance
+     *   is only global for debug access convenience.
+     */
+
+    // ==========================================================================
+    // CONFIGURATION - Centralized constants for easy tuning
+    // ==========================================================================
+    
+    /**
+     * DIFFICULTY LEVELS
+     * -----------------
+     * Each level defines:
+     * - initialSpeed: Starting ms per move (lower = faster)
+     * - minSpeed: Maximum speed cap
+     * - speedIncrement: How much faster per food eaten
+     * 
+     * Design rationale:
+     * - Easy: Relaxed pace for beginners, gentle acceleration
+     * - Medium: Classic arcade feel, balanced challenge
+     * - Hard: Fast start, aggressive scaling
+     * - Insane: For masochists only - twitchy reaction speeds
+     */
+    const DifficultyLevels = Object.freeze({
+        easy: {
+            name: 'Easy',
+            initialSpeed: 180,
+            minSpeed: 80,
+            speedIncrement: 2,
+            color: '#00ff41'
+        },
+        medium: {
+            name: 'Medium', 
+            initialSpeed: 130,
+            minSpeed: 60,
+            speedIncrement: 3,
+            color: '#ffcc00'
+        },
+        hard: {
+            name: 'Hard',
+            initialSpeed: 90,
+            minSpeed: 45,
+            speedIncrement: 4,
+            color: '#ff6600'
+        },
+        insane: {
+            name: 'Insane',
+            initialSpeed: 60,
+            minSpeed: 30,
+            speedIncrement: 2,
+            color: '#ff0040'
+        }
+    });
+    
+    // Current selected difficulty (mutable, changed by UI)
+    let currentDifficulty = 'easy';
+    
+    const GameConfig = Object.freeze({
+        // Grid dimensions
+        GRID_SIZE: 20,           // 20x20 cell grid
+        CELL_SIZE: 20,           // 20px per cell
+        
+        // Timing will be overridden by difficulty
+        INITIAL_SPEED: 150,      // Default (overridden)
+        MIN_SPEED: 60,           // Default (overridden)
+        SPEED_INCREMENT: 3,      // Default (overridden)
+        
+        // Gameplay
+        INITIAL_LENGTH: 3,       // Starting snake length
+        INPUT_BUFFER_SIZE: 2,    // Max queued direction changes
+        
+        // Visual colors (retro arcade palette)
+        COLORS: Object.freeze({
+            BACKGROUND: '#0f0f23',
+            GRID: '#1a1a2e',
+            SNAKE_HEAD: '#00ff41',
+            SNAKE_BODY: '#00b330',
+            SNAKE_TAIL: '#008020',
+            FOOD: '#ff0040',
+            FOOD_GLOW: '#ff004066',
+            TEXT: '#e0e0e0',
+            TEXT_DIM: '#666666',
+            ACCENT: '#ffcc00'
+        }),
+        
+        // Animation
+        FOOD_PULSE_SPEED: 0.005,  // Pulse animation speed
+        BOOT_DURATION: 1500       // Boot screen duration (ms)
+    });
+    
+    // ==========================================================================
+    // THEME SYSTEM - Color palette switching
+    // ==========================================================================
+    const Themes = Object.freeze({
+        retro: {
+            name: 'Retro',
+            background: '#0f0f23',
+            grid: '#1a1a2e',
+            snakeHead: '#00ff41',
+            snakeBody: '#00b330',
+            snakeTail: '#008020',
+            food: '#ff0040',
+            foodGlow: '#ff004066',
+            wall: '#ff6600',
+            portal1: '#00ffff',
+            portal2: '#ff00ff',
+            powerup: '#ffcc00',
+            text: '#e0e0e0',
+            textDim: '#666666'
+        },
+        gameboy: {
+            name: 'Game Boy',
+            background: '#9bbc0f',
+            grid: '#8bac0f',
+            snakeHead: '#0f380f',
+            snakeBody: '#306230',
+            snakeTail: '#0f380f',
+            food: '#0f380f',
+            foodGlow: '#0f380f66',
+            wall: '#0f380f',
+            portal1: '#306230',
+            portal2: '#0f380f',
+            powerup: '#0f380f',
+            text: '#0f380f',
+            textDim: '#306230'
+        },
+        c64: {
+            name: 'C64',
+            background: '#4040e0',
+            grid: '#5050f0',
+            snakeHead: '#7c7cfc',
+            snakeBody: '#a0a0fc',
+            snakeTail: '#7878e0',
+            food: '#ff6060',
+            foodGlow: '#ff606066',
+            wall: '#ffff60',
+            portal1: '#60ff60',
+            portal2: '#ff60ff',
+            powerup: '#ffff60',
+            text: '#7c7cfc',
+            textDim: '#5050f0'
+        },
+        amber: {
+            name: 'Amber CRT',
+            background: '#1a0f00',
+            grid: '#2a1a00',
+            snakeHead: '#ffb000',
+            snakeBody: '#cc8800',
+            snakeTail: '#805800',
+            food: '#ff6600',
+            foodGlow: '#ff660066',
+            wall: '#ffcc00',
+            portal1: '#ffdd44',
+            portal2: '#ff8800',
+            powerup: '#ffdd44',
+            text: '#ffb000',
+            textDim: '#805800'
+        },
+        neon: {
+            name: 'Neon',
+            background: '#0a0a1a',
+            grid: '#1a1a2a',
+            snakeHead: '#00ffff',
+            snakeBody: '#0088ff',
+            snakeTail: '#0044aa',
+            food: '#ff00ff',
+            foodGlow: '#ff00ff66',
+            wall: '#ffff00',
+            portal1: '#00ff00',
+            portal2: '#ff8800',
+            powerup: '#ffffff',
+            text: '#00ffff',
+            textDim: '#0088aa'
+        },
+        grayscale: {
+            name: 'Colorblind',
+            background: '#1a1a1a',
+            grid: '#2a2a2a',
+            snakeHead: '#ffffff',
+            snakeBody: '#cccccc',
+            snakeTail: '#999999',
+            food: '#666666',
+            foodGlow: '#66666666',
+            wall: '#888888',
+            portal1: '#dddddd',
+            portal2: '#555555',
+            powerup: '#aaaaaa',
+            text: '#ffffff',
+            textDim: '#888888'
+        }
+    });
+    
+    let currentTheme = 'retro';
+    
+    // ==========================================================================
+    // POWER-UP SYSTEM - Special items that modify gameplay
+    // ==========================================================================
+    const PowerUpTypes = Object.freeze({
+        GHOST: {
+            id: 'ghost',
+            name: 'Ghost Mode',
+            duration: 5000,
+            color: '#8800ff',
+            symbol: '👻',
+            description: 'Pass through walls and self'
+        },
+        SPEED: {
+            id: 'speed',
+            name: 'Speed Boost',
+            duration: 4000,
+            color: '#ffcc00',
+            symbol: '⚡',
+            description: 'Move 40% faster'
+        },
+        SLOW: {
+            id: 'slow',
+            name: 'Slow Motion',
+            duration: 5000,
+            color: '#00ccff',
+            symbol: '🐢',
+            description: 'Move 50% slower'
+        },
+        MULTIPLIER: {
+            id: 'multiplier',
+            name: '2x Score',
+            duration: 8000,
+            color: '#ff6600',
+            symbol: '×2',
+            description: 'Double all points'
+        },
+        MAGNET: {
+            id: 'magnet',
+            name: 'Food Magnet',
+            duration: 6000,
+            color: '#ff00aa',
+            symbol: '🧲',
+            description: 'Food moves toward you'
+        },
+        SHIELD: {
+            id: 'shield',
+            name: 'Shield',
+            duration: 0,         // One-time use
+            color: '#00ff88',
+            symbol: '🛡️',
+            description: 'Survive one collision'
+        },
+        SHRINK: {
+            id: 'shrink',
+            name: 'Shrink',
+            duration: 0,         // Instant effect
+            color: '#aa00ff',
+            symbol: '📉',
+            description: 'Reduce length by 3'
+        },
+        FREEZE: {
+            id: 'freeze',
+            name: 'Time Freeze',
+            duration: 3000,
+            color: '#88ddff',
+            symbol: '❄️',
+            description: 'Freeze time briefly'
+        }
+    });
+    
+    // ==========================================================================
+    // SNAKE SKINS SYSTEM - Customizable snake appearance
+    // ==========================================================================
+    const SnakeSkins = Object.freeze({
+        default: {
+            id: 'default',
+            name: 'Classic',
+            unlocked: true,
+            pattern: 'solid',
+            headStyle: 'square',
+            trailEffect: 'none',
+            colors: { head: '#00ff41', body: '#00b330', tail: '#008020' }
+        },
+        rainbow: {
+            id: 'rainbow',
+            name: 'Rainbow',
+            unlocked: false,
+            unlockCondition: 'Score 500 points',
+            unlockScore: 500,
+            pattern: 'rainbow',
+            headStyle: 'round',
+            trailEffect: 'sparkle',
+            colors: null  // Dynamic rainbow
+        },
+        fire: {
+            id: 'fire',
+            name: 'Fire Snake',
+            unlocked: false,
+            unlockCondition: 'Win 5 games',
+            unlockWins: 5,
+            pattern: 'gradient',
+            headStyle: 'arrow',
+            trailEffect: 'flame',
+            colors: { head: '#ff4400', body: '#ff8800', tail: '#ffcc00' }
+        },
+        ice: {
+            id: 'ice',
+            name: 'Ice Serpent',
+            unlocked: false,
+            unlockCondition: 'Score 300 in Timed mode',
+            unlockTimedScore: 300,
+            pattern: 'gradient',
+            headStyle: 'diamond',
+            trailEffect: 'frost',
+            colors: { head: '#aaeeff', body: '#44aaff', tail: '#0066cc' }
+        },
+        neon: {
+            id: 'neon',
+            name: 'Neon Glow',
+            unlocked: false,
+            unlockCondition: 'Reach combo x10',
+            unlockCombo: 10,
+            pattern: 'pulse',
+            headStyle: 'round',
+            trailEffect: 'glow',
+            colors: { head: '#ff00ff', body: '#aa00ff', tail: '#6600aa' }
+        },
+        pixel: {
+            id: 'pixel',
+            name: 'Retro Pixel',
+            unlocked: false,
+            unlockCondition: 'Play 20 games',
+            unlockGames: 20,
+            pattern: 'checker',
+            headStyle: 'pixel',
+            trailEffect: 'none',
+            colors: { head: '#ffffff', body: '#aaaaaa', tail: '#666666' }
+        },
+        gold: {
+            id: 'gold',
+            name: 'Golden Dragon',
+            unlocked: false,
+            unlockCondition: 'Score 1000 points',
+            unlockScore: 1000,
+            pattern: 'scales',
+            headStyle: 'dragon',
+            trailEffect: 'sparkle',
+            colors: { head: '#ffd700', body: '#daa520', tail: '#b8860b' }
+        },
+        phantom: {
+            id: 'phantom',
+            name: 'Phantom',
+            unlocked: false,
+            unlockCondition: 'Survive 3 minutes',
+            unlockSurvivalTime: 180000,
+            pattern: 'fade',
+            headStyle: 'ghost',
+            trailEffect: 'fade',
+            colors: { head: '#ffffff88', body: '#aaaaaa66', tail: '#66666644' }
+        }
+    });
+    
+    let currentSkin = 'default';
+    let unlockedSkins = ['default'];  // Will be loaded from localStorage
+    
+    // ==========================================================================
+    // LEVEL SYSTEM - Progressive difficulty with obstacles
+    // ==========================================================================
+    const LevelDefinitions = [
+        {
+            level: 1,
+            name: 'Open Field',
+            walls: [],
+            portals: [],
+            requiredScore: 0
+        },
+        {
+            level: 2,
+            name: 'The Edges',
+            walls: [
+                // Top-left corner
+                {x: 2, y: 2}, {x: 3, y: 2}, {x: 2, y: 3},
+                // Top-right corner
+                {x: 17, y: 2}, {x: 16, y: 2}, {x: 17, y: 3},
+                // Bottom-left corner
+                {x: 2, y: 17}, {x: 3, y: 17}, {x: 2, y: 16},
+                // Bottom-right corner
+                {x: 17, y: 17}, {x: 16, y: 17}, {x: 17, y: 16}
+            ],
+            portals: [],
+            requiredScore: 50
+        },
+        {
+            level: 3,
+            name: 'Portal Run',
+            walls: [
+                // Center vertical walls with gap
+                {x: 9, y: 3}, {x: 9, y: 4}, {x: 9, y: 5}, {x: 9, y: 6},
+                {x: 10, y: 3}, {x: 10, y: 4}, {x: 10, y: 5}, {x: 10, y: 6},
+                {x: 9, y: 13}, {x: 9, y: 14}, {x: 9, y: 15}, {x: 9, y: 16},
+                {x: 10, y: 13}, {x: 10, y: 14}, {x: 10, y: 15}, {x: 10, y: 16}
+            ],
+            portals: [
+                { entry: {x: 2, y: 9}, exit: {x: 17, y: 10} },
+                { entry: {x: 17, y: 9}, exit: {x: 2, y: 10} }
+            ],
+            requiredScore: 100
+        },
+        {
+            level: 4,
+            name: 'The Maze',
+            walls: [
+                // Horizontal walls
+                {x: 4, y: 4}, {x: 5, y: 4}, {x: 6, y: 4}, {x: 7, y: 4},
+                {x: 12, y: 4}, {x: 13, y: 4}, {x: 14, y: 4}, {x: 15, y: 4},
+                {x: 4, y: 15}, {x: 5, y: 15}, {x: 6, y: 15}, {x: 7, y: 15},
+                {x: 12, y: 15}, {x: 13, y: 15}, {x: 14, y: 15}, {x: 15, y: 15},
+                // Vertical walls
+                {x: 4, y: 8}, {x: 4, y: 9}, {x: 4, y: 10}, {x: 4, y: 11},
+                {x: 15, y: 8}, {x: 15, y: 9}, {x: 15, y: 10}, {x: 15, y: 11}
+            ],
+            portals: [
+                { entry: {x: 9, y: 2}, exit: {x: 10, y: 17} },
+                { entry: {x: 10, y: 2}, exit: {x: 9, y: 17} }
+            ],
+            requiredScore: 200
+        },
+        {
+            level: 5,
+            name: 'Cross Roads',
+            walls: [
+                // Large cross in center
+                {x: 9, y: 5}, {x: 10, y: 5}, {x: 9, y: 6}, {x: 10, y: 6},
+                {x: 9, y: 13}, {x: 10, y: 13}, {x: 9, y: 14}, {x: 10, y: 14},
+                {x: 5, y: 9}, {x: 6, y: 9}, {x: 5, y: 10}, {x: 6, y: 10},
+                {x: 13, y: 9}, {x: 14, y: 9}, {x: 13, y: 10}, {x: 14, y: 10}
+            ],
+            portals: [
+                { entry: {x: 0, y: 9}, exit: {x: 19, y: 10} },
+                { entry: {x: 19, y: 9}, exit: {x: 0, y: 10} },
+                { entry: {x: 9, y: 0}, exit: {x: 10, y: 19} },
+                { entry: {x: 10, y: 0}, exit: {x: 9, y: 19} }
+            ],
+            requiredScore: 350
+        }
+    ];
+    
+    // ==========================================================================
+    // GAME MODES - Different ways to play
+    // ==========================================================================
+    const GameModes = Object.freeze({
+        classic: {
+            name: 'Classic',
+            description: 'Endless play, walls wrap around',
+            hasTimer: false,
+            hasLevels: false,
+            hasSurvivalWalls: false,
+            hasBoss: false,
+            isMultiplayer: false
+        },
+        timed: {
+            name: 'Time Attack',
+            description: 'Score as high as possible in 60 seconds',
+            hasTimer: true,
+            timerDuration: 60000,
+            hasLevels: false,
+            hasSurvivalWalls: false,
+            hasBoss: false,
+            isMultiplayer: false
+        },
+        survival: {
+            name: 'Survival',
+            description: 'Walls close in over time - survive!',
+            hasTimer: false,
+            hasLevels: false,
+            hasSurvivalWalls: true,
+            wallCloseInterval: 15000,
+            hasBoss: false,
+            isMultiplayer: false
+        },
+        levels: {
+            name: 'Levels',
+            description: 'Progress through increasingly difficult layouts',
+            hasTimer: false,
+            hasLevels: true,
+            hasSurvivalWalls: false,
+            hasBoss: false,
+            isMultiplayer: false
+        },
+        boss: {
+            name: 'Boss Battle',
+            description: 'Defeat the AI boss snake!',
+            hasTimer: false,
+            hasLevels: false,
+            hasSurvivalWalls: false,
+            hasBoss: true,
+            isMultiplayer: false
+        },
+        multiplayer: {
+            name: 'Multiplayer',
+            description: 'Play against a friend online',
+            hasTimer: false,
+            hasLevels: false,
+            hasSurvivalWalls: false,
+            hasBoss: false,
+            isMultiplayer: true
+        },
+        ghost: {
+            name: 'Ghost Race',
+            description: 'Race against your best replay',
+            hasTimer: false,
+            hasLevels: false,
+            hasSurvivalWalls: false,
+            hasBoss: false,
+            isMultiplayer: false,
+            hasGhost: true
+        }
+    });
+    
+    let currentGameMode = 'classic';
+    
+    // ==========================================================================
+    // BOSS DEFINITIONS - AI enemy snake configurations
+    // ==========================================================================
+    const BossDefinitions = Object.freeze({
+        python: {
+            id: 'python',
+            name: 'Python',
+            description: 'A slow but long snake',
+            color: '#ff4444',
+            speed: 200,
+            initialLength: 8,
+            behavior: 'chase',
+            healthPoints: 3,
+            rewardScore: 100
+        },
+        viper: {
+            id: 'viper',
+            name: 'Viper',
+            description: 'Fast and aggressive',
+            color: '#44ff44',
+            speed: 100,
+            initialLength: 5,
+            behavior: 'aggressive',
+            healthPoints: 2,
+            rewardScore: 150
+        },
+        cobra: {
+            id: 'cobra',
+            name: 'King Cobra',
+            description: 'Unpredictable movement patterns',
+            color: '#ffaa00',
+            speed: 130,
+            initialLength: 10,
+            behavior: 'pattern',
+            healthPoints: 5,
+            rewardScore: 250
+        }
+    });
+
+    // ==========================================================================
+    // AUDIO MANAGER - 8-bit style sound synthesis
+    // ==========================================================================
+    class AudioManager {
+        constructor() {
+            this.ctx = null;
+            this.enabled = true;
+            this.initialized = false;
+        }
+
+        /**
+         * Lazy initialization on first user interaction.
+         * Required by browsers' autoplay policies.
+         */
+        init() {
+            if (this.initialized) return;
+            try {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.initialized = true;
+            } catch (e) {
+                console.warn('Web Audio API not supported');
+                this.enabled = false;
+            }
+        }
+
+        /**
+         * Generate a simple square wave beep - classic 8-bit sound
+         * @param {number} freq - Frequency in Hz
+         * @param {number} duration - Duration in seconds
+         * @param {number} volume - Volume 0-1
+         */
+        beep(freq, duration, volume = 0.1) {
+            if (!this.enabled || !this.ctx) return;
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            
+            osc.type = 'square';  // Classic 8-bit waveform
+            osc.frequency.value = freq;
+            
+            gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            osc.start(this.ctx.currentTime);
+            osc.stop(this.ctx.currentTime + duration);
+        }
+
+        // Sound effect presets - tuned to not be annoying
+        playEat() {
+            this.beep(880, 0.05, 0.08);
+            setTimeout(() => this.beep(1320, 0.05, 0.06), 50);
+        }
+
+        playDeath() {
+            this.beep(200, 0.15, 0.1);
+            setTimeout(() => this.beep(150, 0.15, 0.08), 100);
+            setTimeout(() => this.beep(100, 0.2, 0.06), 200);
+        }
+
+        playStart() {
+            this.beep(440, 0.1, 0.06);
+            setTimeout(() => this.beep(660, 0.1, 0.06), 100);
+            setTimeout(() => this.beep(880, 0.15, 0.08), 200);
+        }
+
+        playPause() {
+            this.beep(440, 0.08, 0.05);
+        }
+        
+        playCombo(level) {
+            // Higher pitch for higher combos
+            const baseFreq = 660 + (level * 110);
+            this.beep(baseFreq, 0.08, 0.06);
+            setTimeout(() => this.beep(baseFreq * 1.5, 0.1, 0.08), 60);
+        }
+        
+        playCountdown() {
+            this.beep(440, 0.1, 0.05);
+        }
+        
+        playGo() {
+            this.beep(880, 0.15, 0.08);
+        }
+        
+        playPowerUp() {
+            // Rising arpeggio for power-up collection
+            this.beep(523, 0.08, 0.06);   // C5
+            setTimeout(() => this.beep(659, 0.08, 0.06), 50);   // E5
+            setTimeout(() => this.beep(784, 0.08, 0.07), 100);  // G5
+            setTimeout(() => this.beep(1047, 0.12, 0.08), 150); // C6
+        }
+        
+        playPortal() {
+            // Whoosh sound for portal teleport
+            this.beep(800, 0.1, 0.05);
+            setTimeout(() => this.beep(400, 0.15, 0.07), 50);
+        }
+        
+        playLevelUp() {
+            // Triumphant fanfare for level completion
+            this.beep(523, 0.1, 0.07);   // C5
+            setTimeout(() => this.beep(659, 0.1, 0.07), 100);  // E5
+            setTimeout(() => this.beep(784, 0.1, 0.08), 200);  // G5
+            setTimeout(() => this.beep(1047, 0.2, 0.1), 300);  // C6
+        }
+        
+        toggle() {
+            this.enabled = !this.enabled;
+            return this.enabled;
+        }
+    }
+    
+    // ==========================================================================
+    // PARTICLE SYSTEM - Visual feedback for food collection
+    // ==========================================================================
+    class ParticleSystem {
+        constructor() {
+            this.particles = [];
+        }
+        
+        /**
+         * Spawn particles at a position with given color
+         * @param {number} x - X position (pixels)
+         * @param {number} y - Y position (pixels)
+         * @param {string} color - Particle color
+         * @param {number} count - Number of particles
+         */
+        emit(x, y, color = '#ff0040', count = 8) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                const speed = 2 + Math.random() * 3;
+                
+                this.particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.0,  // 1.0 to 0.0
+                    decay: 0.02 + Math.random() * 0.02,
+                    size: 3 + Math.random() * 3,
+                    color
+                });
+            }
+        }
+        
+        /**
+         * Emit combo particles (more dramatic)
+         */
+        emitCombo(x, y, comboLevel) {
+            const colors = ['#ffcc00', '#ff6600', '#ff0040', '#00ff41'];
+            const color = colors[Math.min(comboLevel - 1, colors.length - 1)];
+            this.emit(x, y, color, 12 + comboLevel * 4);
+        }
+        
+        /**
+         * Update all particles
+         * @param {number} deltaTime - Time since last frame
+         */
+        update(deltaTime) {
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const p = this.particles[i];
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1;  // Gravity
+                p.life -= p.decay;
+                
+                if (p.life <= 0) {
+                    this.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        /**
+         * Render all particles
+         * @param {CanvasRenderingContext2D} ctx - Canvas context
+         */
+        render(ctx) {
+            this.particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(
+                    p.x - p.size / 2,
+                    p.y - p.size / 2,
+                    p.size * p.life,
+                    p.size * p.life
+                );
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        clear() {
+            this.particles = [];
+        }
+    }
+    
+    // ==========================================================================
+    // POWER-UP MANAGER - Spawns and manages power-up items
+    // ==========================================================================
+    class PowerUpManager {
+        constructor() {
+            this.activePowerUp = null;      // Power-up on the field
+            this.activeEffects = {};         // Currently active effects
+            this.spawnChance = 0.15;         // 15% chance per food eaten
+            this.lastSpawnScore = 0;
+        }
+        
+        reset() {
+            this.activePowerUp = null;
+            this.activeEffects = {};
+            this.lastSpawnScore = 0;
+        }
+        
+        /**
+         * Maybe spawn a power-up after food is eaten
+         */
+        trySpawn(score, occupiedCells, gridSize) {
+            // Don't spawn if one already exists or too soon
+            if (this.activePowerUp) return;
+            if (score - this.lastSpawnScore < 30) return;
+            
+            if (Math.random() < this.spawnChance) {
+                const types = Object.values(PowerUpTypes);
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                // Find empty cell
+                let attempts = 0;
+                let pos;
+                do {
+                    pos = {
+                        x: Math.floor(Math.random() * gridSize),
+                        y: Math.floor(Math.random() * gridSize)
+                    };
+                    attempts++;
+                } while (occupiedCells.some(c => c.x === pos.x && c.y === pos.y) && attempts < 100);
+                
+                if (attempts < 100) {
+                    this.activePowerUp = { ...type, ...pos };
+                    this.lastSpawnScore = score;
+                }
+            }
+        }
+        
+        /**
+         * Check if snake head collects power-up
+         */
+        checkCollection(headX, headY) {
+            if (!this.activePowerUp) return null;
+            
+            if (this.activePowerUp.x === headX && this.activePowerUp.y === headY) {
+                const collected = this.activePowerUp;
+                this.activePowerUp = null;
+                this.activateEffect(collected);
+                return collected;
+            }
+            return null;
+        }
+        
+        activateEffect(powerUp) {
+            this.activeEffects[powerUp.id] = {
+                type: powerUp,
+                endTime: performance.now() + powerUp.duration
+            };
+        }
+        
+        /**
+         * Update active effects, remove expired ones
+         */
+        update() {
+            const now = performance.now();
+            for (const id in this.activeEffects) {
+                if (this.activeEffects[id].endTime <= now) {
+                    delete this.activeEffects[id];
+                }
+            }
+        }
+        
+        hasEffect(effectId) {
+            return !!this.activeEffects[effectId];
+        }
+        
+        getEffectTimeRemaining(effectId) {
+            if (!this.activeEffects[effectId]) return 0;
+            return Math.max(0, this.activeEffects[effectId].endTime - performance.now());
+        }
+    }
+    
+    // ==========================================================================
+    // LEVEL MANAGER - Handles level progression and obstacles
+    // ==========================================================================
+    class LevelManager {
+        constructor() {
+            this.currentLevel = 0;
+            this.walls = [];
+            this.portals = [];
+            this.survivalWalls = [];  // For survival mode
+            this.survivalWallTimer = 0;
+        }
+        
+        reset() {
+            this.currentLevel = 0;
+            this.loadLevel(0);
+            this.survivalWalls = [];
+            this.survivalWallTimer = 0;
+        }
+        
+        loadLevel(index) {
+            const level = LevelDefinitions[Math.min(index, LevelDefinitions.length - 1)];
+            this.currentLevel = index;
+            this.walls = [...level.walls];
+            this.portals = level.portals.map(p => ({
+                entry: { ...p.entry },
+                exit: { ...p.exit }
+            }));
+        }
+        
+        /**
+         * Check if score qualifies for next level
+         */
+        checkLevelUp(score) {
+            const nextLevel = this.currentLevel + 1;
+            if (nextLevel < LevelDefinitions.length) {
+                if (score >= LevelDefinitions[nextLevel].requiredScore) {
+                    this.loadLevel(nextLevel);
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        /**
+         * Check if position hits a wall
+         */
+        isWall(x, y) {
+            return this.walls.some(w => w.x === x && w.y === y) ||
+                   this.survivalWalls.some(w => w.x === x && w.y === y);
+        }
+        
+        /**
+         * Check if position hits a portal entry, return exit if so
+         */
+        checkPortal(x, y) {
+            for (const portal of this.portals) {
+                if (portal.entry.x === x && portal.entry.y === y) {
+                    return portal.exit;
+                }
+            }
+            return null;
+        }
+        
+        /**
+         * Survival mode: close walls inward over time
+         */
+        updateSurvivalWalls(deltaTime, gridSize) {
+            this.survivalWallTimer += deltaTime;
+            
+            const interval = GameModes.survival.wallCloseInterval;
+            const layer = Math.floor(this.survivalWallTimer / interval);
+            
+            if (layer > 0 && this.survivalWalls.length < layer * (gridSize * 4 - 4)) {
+                this.generateSurvivalWallLayer(layer - 1, gridSize);
+                return true;  // New walls added
+            }
+            return false;
+        }
+        
+        generateSurvivalWallLayer(layer, gridSize) {
+            const offset = layer;
+            
+            // Top and bottom rows
+            for (let x = offset; x < gridSize - offset; x++) {
+                this.addSurvivalWall(x, offset, gridSize);
+                this.addSurvivalWall(x, gridSize - 1 - offset, gridSize);
+            }
+            
+            // Left and right columns (excluding corners)
+            for (let y = offset + 1; y < gridSize - 1 - offset; y++) {
+                this.addSurvivalWall(offset, y, gridSize);
+                this.addSurvivalWall(gridSize - 1 - offset, y, gridSize);
+            }
+        }
+        
+        addSurvivalWall(x, y, gridSize) {
+            // Don't add if already exists or would block too much
+            if (!this.survivalWalls.some(w => w.x === x && w.y === y)) {
+                // Leave some gaps for playability
+                if (Math.random() > 0.1 || (x > 7 && x < 12 && y > 7 && y < 12)) {
+                    this.survivalWalls.push({ x, y });
+                }
+            }
+        }
+        
+        getAllObstacles() {
+            return [...this.walls, ...this.survivalWalls];
+        }
+        
+        getLevelName() {
+            return LevelDefinitions[Math.min(this.currentLevel, LevelDefinitions.length - 1)].name;
+        }
+    }
+    
+    // ==========================================================================
+    // SKIN MANAGER - Handles snake appearance customization
+    // ==========================================================================
+    class SkinManager {
+        constructor() {
+            this.currentSkin = 'default';
+            this.unlockedSkins = ['default'];
+            this.stats = {
+                highScore: 0,
+                gamesPlayed: 0,
+                gamesWon: 0,
+                maxCombo: 0,
+                timedHighScore: 0,
+                maxSurvivalTime: 0
+            };
+            this.loadProgress();
+        }
+        
+        loadProgress() {
+            try {
+                const saved = localStorage.getItem('snakeSkinProgress');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.unlockedSkins = data.unlocked || ['default'];
+                    this.currentSkin = data.current || 'default';
+                    this.stats = { ...this.stats, ...data.stats };
+                }
+            } catch (e) {
+                console.warn('Could not load skin progress');
+            }
+        }
+        
+        saveProgress() {
+            try {
+                localStorage.setItem('snakeSkinProgress', JSON.stringify({
+                    unlocked: this.unlockedSkins,
+                    current: this.currentSkin,
+                    stats: this.stats
+                }));
+            } catch (e) {
+                console.warn('Could not save skin progress');
+            }
+        }
+        
+        checkUnlocks(score, combo, mode, survivalTime, won) {
+            const newUnlocks = [];
+            this.stats.gamesPlayed++;
+            if (score > this.stats.highScore) this.stats.highScore = score;
+            if (combo > this.stats.maxCombo) this.stats.maxCombo = combo;
+            if (won) this.stats.gamesWon++;
+            if (mode === 'timed' && score > this.stats.timedHighScore) this.stats.timedHighScore = score;
+            if (mode === 'survival' && survivalTime > this.stats.maxSurvivalTime) this.stats.maxSurvivalTime = survivalTime;
+            
+            // Check each skin's unlock condition
+            for (const [id, skin] of Object.entries(SnakeSkins)) {
+                if (this.unlockedSkins.includes(id)) continue;
+                
+                let unlocked = false;
+                if (skin.unlockScore && this.stats.highScore >= skin.unlockScore) unlocked = true;
+                if (skin.unlockWins && this.stats.gamesWon >= skin.unlockWins) unlocked = true;
+                if (skin.unlockCombo && this.stats.maxCombo >= skin.unlockCombo) unlocked = true;
+                if (skin.unlockGames && this.stats.gamesPlayed >= skin.unlockGames) unlocked = true;
+                if (skin.unlockTimedScore && this.stats.timedHighScore >= skin.unlockTimedScore) unlocked = true;
+                if (skin.unlockSurvivalTime && this.stats.maxSurvivalTime >= skin.unlockSurvivalTime) unlocked = true;
+                
+                if (unlocked) {
+                    this.unlockedSkins.push(id);
+                    newUnlocks.push(skin);
+                }
+            }
+            
+            this.saveProgress();
+            return newUnlocks;
+        }
+        
+        setSkin(skinId) {
+            if (this.unlockedSkins.includes(skinId)) {
+                this.currentSkin = skinId;
+                this.saveProgress();
+                return true;
+            }
+            return false;
+        }
+        
+        getSkin() {
+            return SnakeSkins[this.currentSkin] || SnakeSkins.default;
+        }
+        
+        getUnlockedSkins() {
+            return this.unlockedSkins.map(id => SnakeSkins[id]).filter(Boolean);
+        }
+        
+        getAllSkins() {
+            return Object.values(SnakeSkins).map(skin => ({
+                ...skin,
+                isUnlocked: this.unlockedSkins.includes(skin.id)
+            }));
+        }
+        
+        isUnlocked(skinId) {
+            return this.unlockedSkins.includes(skinId);
+        }
+    }
+    
+    // ==========================================================================
+    // REPLAY MANAGER - Records and plays back game sessions
+    // ==========================================================================
+    class ReplayManager {
+        constructor() {
+            this.isRecording = false;
+            this.isPlaying = false;
+            this.currentReplay = null;
+            this.bestReplay = null;
+            this.recordedInputs = [];
+            this.recordStartTime = 0;
+            this.playbackIndex = 0;
+            this.playbackTime = 0;
+            this.loadBestReplay();
+        }
+        
+        loadBestReplay() {
+            try {
+                const saved = localStorage.getItem('snakeBestReplay');
+                if (saved) {
+                    this.bestReplay = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('Could not load best replay');
+            }
+        }
+        
+        saveBestReplay() {
+            try {
+                if (this.bestReplay) {
+                    localStorage.setItem('snakeBestReplay', JSON.stringify(this.bestReplay));
+                }
+            } catch (e) {
+                console.warn('Could not save best replay');
+            }
+        }
+        
+        startRecording(initialState) {
+            this.isRecording = true;
+            this.recordedInputs = [];
+            this.recordStartTime = performance.now();
+            
+            // Handle case where no state is provided
+            if (!initialState) {
+                this.currentReplay = {
+                    startState: null,
+                    inputs: [],
+                    finalScore: 0,
+                    timestamp: Date.now()
+                };
+                return;
+            }
+            
+            this.currentReplay = {
+                startState: {
+                    snake: JSON.parse(JSON.stringify(initialState.snake)),
+                    direction: { ...initialState.direction },
+                    food: initialState.food ? { ...initialState.food } : null,
+                    difficulty: initialState.difficulty ? initialState.difficulty.name : 'easy'
+                },
+                inputs: [],
+                finalScore: 0,
+                timestamp: Date.now()
+            };
+        }
+        
+        recordInput(direction, timestamp = performance.now()) {
+            if (!this.isRecording) return;
+            const relativeTime = timestamp - this.recordStartTime;
+            this.currentReplay.inputs.push({
+                time: relativeTime,
+                direction: direction
+            });
+        }
+        
+        stopRecording(finalScore) {
+            if (!this.isRecording) return null;
+            this.isRecording = false;
+            this.currentReplay.finalScore = finalScore;
+            this.currentReplay.duration = performance.now() - this.recordStartTime;
+            
+            // Check if this is a new best
+            if (!this.bestReplay || finalScore > this.bestReplay.finalScore) {
+                this.bestReplay = { ...this.currentReplay };
+                this.saveBestReplay();
+                return { isNewBest: true, replay: this.currentReplay };
+            }
+            
+            return { isNewBest: false, replay: this.currentReplay };
+        }
+        
+        startPlayback(replay = null) {
+            const replayToUse = replay || this.bestReplay;
+            if (!replayToUse) return false;
+            
+            this.isPlaying = true;
+            this.playbackIndex = 0;
+            this.playbackTime = 0;
+            this.currentReplay = replayToUse;
+            return replayToUse.startState;
+        }
+        
+        getNextInput(deltaTime) {
+            if (!this.isPlaying || !this.currentReplay) return null;
+            
+            this.playbackTime += deltaTime;
+            
+            // Check if there's an input at or before current time
+            while (this.playbackIndex < this.currentReplay.inputs.length) {
+                const input = this.currentReplay.inputs[this.playbackIndex];
+                if (input.time <= this.playbackTime) {
+                    this.playbackIndex++;
+                    return input.direction;
+                }
+                break;
+            }
+            
+            // Check if playback is complete
+            if (this.playbackIndex >= this.currentReplay.inputs.length) {
+                this.isPlaying = false;
+            }
+            
+            return null;
+        }
+        
+        stopPlayback() {
+            this.isPlaying = false;
+            this.playbackIndex = 0;
+            this.playbackTime = 0;
+        }
+        
+        hasBestReplay() {
+            return this.bestReplay !== null;
+        }
+        
+        getBestScore() {
+            return this.bestReplay ? this.bestReplay.finalScore : 0;
+        }
+        
+        exportReplay() {
+            if (!this.currentReplay) return null;
+            return btoa(JSON.stringify(this.currentReplay));
+        }
+        
+        importReplay(code) {
+            try {
+                const replay = JSON.parse(atob(code));
+                if (replay.inputs && replay.startState) {
+                    return replay;
+                }
+            } catch (e) {
+                console.warn('Invalid replay code');
+            }
+            return null;
+        }
+    }
+    
+    // ==========================================================================
+    // BOSS MANAGER - AI enemy snake for boss battles
+    // ==========================================================================
+    class BossManager {
+        constructor() {
+            this.boss = null;
+            this.bossDefinition = null;
+            this.healthPoints = 0;
+            this.isActive = false;
+            this.moveTimer = 0;
+            this.patternPhase = 0;
+            this.targetFood = null;
+        }
+        
+        reset() {
+            this.boss = null;
+            this.bossDefinition = null;
+            this.healthPoints = 0;
+            this.isActive = false;
+            this.moveTimer = 0;
+            this.patternPhase = 0;
+        }
+        
+        spawnBoss(bossId, gridSize) {
+            const def = BossDefinitions[bossId];
+            if (!def) return false;
+            
+            this.bossDefinition = def;
+            this.healthPoints = def.healthPoints;
+            this.isActive = true;
+            this.moveTimer = 0;
+            this.patternPhase = 0;
+            
+            // Spawn boss on opposite side from player (bottom-left)
+            const startX = 3;
+            const startY = gridSize - 4;
+            
+            this.boss = {
+                body: [],  // Use 'body' to match drawBossSnake
+                direction: { x: 1, y: 0 },
+                color: def.color,
+                health: def.healthPoints,
+                maxHealth: def.healthPoints,
+                type: bossId
+            };
+            
+            for (let i = 0; i < def.initialLength; i++) {
+                this.boss.body.push({ x: startX - i, y: startY });
+            }
+            
+            return true;
+        }
+        
+        update(deltaTime, playerHead, foodPos, gridSize) {
+            if (!this.isActive || !this.boss) return null;
+            
+            this.moveTimer += deltaTime;
+            
+            if (this.moveTimer < this.bossDefinition.speed) return null;
+            this.moveTimer = 0;
+            
+            // Determine direction based on behavior
+            const newDirection = this.calculateDirection(playerHead, foodPos, gridSize);
+            if (newDirection) {
+                this.boss.direction = newDirection;
+            }
+            
+            // Move boss
+            const head = this.boss.body[0];
+            let newHead = {
+                x: head.x + this.boss.direction.x,
+                y: head.y + this.boss.direction.y
+            };
+            
+            // Wrap around
+            if (newHead.x < 0) newHead.x = gridSize - 1;
+            if (newHead.x >= gridSize) newHead.x = 0;
+            if (newHead.y < 0) newHead.y = gridSize - 1;
+            if (newHead.y >= gridSize) newHead.y = 0;
+            
+            this.boss.body.unshift(newHead);
+            this.boss.body.pop();
+            
+            return newHead;
+        }
+        
+        calculateDirection(playerHead, foodPos, gridSize) {
+            const head = this.boss.body[0];
+            let targetX, targetY;
+            
+            switch (this.bossDefinition.behavior) {
+                case 'chase':
+                    // Chase the player
+                    targetX = playerHead.x;
+                    targetY = playerHead.y;
+                    break;
+                    
+                case 'aggressive':
+                    // Chase food if close, otherwise chase player
+                    if (foodPos && Math.abs(head.x - foodPos.x) + Math.abs(head.y - foodPos.y) < 8) {
+                        targetX = foodPos.x;
+                        targetY = foodPos.y;
+                    } else {
+                        targetX = playerHead.x;
+                        targetY = playerHead.y;
+                    }
+                    break;
+                    
+                case 'pattern':
+                    // Move in patterns with occasional chasing
+                    this.patternPhase++;
+                    if (this.patternPhase % 40 < 20) {
+                        // Circle pattern
+                        const patterns = [
+                            { x: 1, y: 0 }, { x: 0, y: 1 },
+                            { x: -1, y: 0 }, { x: 0, y: -1 }
+                        ];
+                        const patternIdx = Math.floor(this.patternPhase / 5) % 4;
+                        return patterns[patternIdx];
+                    } else {
+                        targetX = playerHead.x;
+                        targetY = playerHead.y;
+                    }
+                    break;
+                    
+                default:
+                    return null;
+            }
+            
+            // Simple pathfinding - move toward target
+            const dx = targetX - head.x;
+            const dy = targetY - head.y;
+            
+            // Don't reverse direction
+            const current = this.boss.direction;
+            
+            let possibleDirs = [];
+            if (dx > 0 && current.x !== -1) possibleDirs.push({ x: 1, y: 0 });
+            if (dx < 0 && current.x !== 1) possibleDirs.push({ x: -1, y: 0 });
+            if (dy > 0 && current.y !== -1) possibleDirs.push({ x: 0, y: 1 });
+            if (dy < 0 && current.y !== 1) possibleDirs.push({ x: 0, y: -1 });
+            
+            if (possibleDirs.length > 0) {
+                // Pick the direction that gets us closer
+                return possibleDirs[0];
+            }
+            
+            return null;
+        }
+        
+        checkCollision(playerSnake) {
+            if (!this.isActive || !this.boss) return { playerHit: false, bossHit: false };
+            
+            const playerHead = playerSnake[0];
+            const bossHead = this.boss.body[0];
+            
+            // Check if player hit boss body
+            let playerHitBoss = false;
+            for (let i = 1; i < this.boss.body.length; i++) {
+                if (playerHead.x === this.boss.body[i].x && 
+                    playerHead.y === this.boss.body[i].y) {
+                    playerHitBoss = true;
+                    break;
+                }
+            }
+            
+            // Check if boss hit player body
+            let bossHitPlayer = false;
+            for (let i = 1; i < playerSnake.length; i++) {
+                if (bossHead.x === playerSnake[i].x && 
+                    bossHead.y === playerSnake[i].y) {
+                    bossHitPlayer = true;
+                    break;
+                }
+            }
+            
+            // Head-on collision
+            const headCollision = playerHead.x === bossHead.x && playerHead.y === bossHead.y;
+            
+            return { 
+                playerHitBoss: playerHitBoss || headCollision, 
+                bossHitPlayer: bossHitPlayer || headCollision,
+                headCollision 
+            };
+        }
+        
+        // Alias methods for compatibility
+        checkCollisionWithSnake(playerSnake) {
+            const result = this.checkCollision(playerSnake);
+            return result.bossHitPlayer;
+        }
+        
+        checkPlayerAttack(playerHead) {
+            if (!this.isActive || !this.boss || !this.boss.body) return false;
+            // Check if player head hit any boss body segment (not head)
+            for (let i = 1; i < this.boss.body.length; i++) {
+                if (playerHead.x === this.boss.body[i].x && 
+                    playerHead.y === this.boss.body[i].y) {
+                    this.boss.health--;
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        takeDamage() {
+            this.healthPoints--;
+            if (this.healthPoints <= 0) {
+                this.isActive = false;
+                return { defeated: true, reward: this.bossDefinition.rewardScore };
+            }
+            return { defeated: false, reward: 0 };
+        }
+        
+        getBoss() {
+            return this.boss;
+        }
+        
+        getHealthPercent() {
+            if (!this.bossDefinition) return 0;
+            return this.healthPoints / this.bossDefinition.healthPoints;
+        }
+    }
+    
+    // ==========================================================================
+    // MULTIPLAYER MANAGER - P2P connections via PeerJS
+    // ==========================================================================
+    class MultiplayerManager {
+        constructor() {
+            this.peer = null;
+            this.connection = null;
+            this.isHost = false;
+            this.isConnected = false;
+            this.gameCode = '';
+            this.opponentSnake = null;
+            this.opponentScore = 0;
+            this.callbacks = {};
+            this.lastSentState = null;
+        }
+        
+        /**
+         * Initialize PeerJS - requires external script
+         */
+        async init() {
+            // Check if PeerJS is loaded
+            if (typeof Peer === 'undefined') {
+                // Dynamically load PeerJS
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js';
+                    script.onload = () => resolve(true);
+                    script.onerror = () => reject(new Error('Failed to load PeerJS'));
+                    document.head.appendChild(script);
+                });
+            }
+            return true;
+        }
+        
+        /**
+         * Create a new game and get a shareable code
+         */
+        async createGame() {
+            await this.init();
+            
+            return new Promise((resolve, reject) => {
+                // Generate a simple game code
+                this.gameCode = this.generateGameCode();
+                
+                this.peer = new Peer(this.gameCode);
+                this.isHost = true;
+                
+                this.peer.on('open', (id) => {
+                    console.log('Game created with code:', id);
+                    resolve(id);
+                });
+                
+                this.peer.on('connection', (conn) => {
+                    this.connection = conn;
+                    this.setupConnection();
+                });
+                
+                this.peer.on('error', (err) => {
+                    // Don't spam console with network errors
+                    reject(err);
+                });
+            });
+        }
+        
+        /**
+         * Join an existing game with a code
+         */
+        async joinGame(code) {
+            await this.init();
+            
+            return new Promise((resolve, reject) => {
+                this.gameCode = code;
+                this.peer = new Peer();
+                this.isHost = false;
+                
+                this.peer.on('open', () => {
+                    this.connection = this.peer.connect(code);
+                    this.setupConnection();
+                    
+                    this.connection.on('open', () => {
+                        resolve(true);
+                    });
+                });
+                
+                this.peer.on('error', (err) => {
+                    // Don't spam console with network errors
+                    reject(err);
+                });
+                
+                // Timeout
+                setTimeout(() => {
+                    if (!this.isConnected) {
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 10000);
+            });
+        }
+        
+        setupConnection() {
+            if (!this.connection) return;
+            
+            // Handler for when connection opens
+            const handleOpen = () => {
+                if (!this.isConnected) {
+                    this.isConnected = true;
+                    this.callbacks.onConnect?.();
+                }
+            };
+            
+            // Check if connection is already open (for host receiving connections)
+            if (this.connection.open) {
+                handleOpen();
+            }
+            
+            // Also listen for open event (for joiner)
+            this.connection.on('open', handleOpen);
+            
+            this.connection.on('data', (data) => {
+                this.handleMessage(data);
+            });
+            
+            this.connection.on('close', () => {
+                this.isConnected = false;
+                this.callbacks.onDisconnect?.();
+            });
+        }
+        
+        handleMessage(data) {
+            switch (data.type) {
+                case 'state':
+                    this.opponentSnake = data.snake;
+                    this.opponentScore = data.score;
+                    this.callbacks.onOpponentUpdate?.(data);
+                    break;
+                case 'food':
+                    this.callbacks.onFoodSync?.(data.food);
+                    break;
+                case 'gameOver':
+                    this.callbacks.onOpponentGameOver?.(data.score);
+                    break;
+                case 'start':
+                    this.callbacks.onGameStart?.(data);
+                    break;
+            }
+        }
+        
+        sendState(snake, score, direction) {
+            if (!this.isConnected || !this.connection) return;
+            this.connection.send({
+                type: 'state',
+                snake: snake,
+                score: score,
+                direction: direction
+            });
+        }
+        
+        sendFood(food) {
+            if (!this.isConnected || !this.connection) return;
+            this.connection.send({
+                type: 'food',
+                food: food
+            });
+        }
+        
+        sendGameOver(score) {
+            if (!this.isConnected || !this.connection) return;
+            this.connection.send({
+                type: 'gameOver',
+                score: score
+            });
+        }
+        
+        startGame(seed) {
+            if (!this.isConnected || !this.connection) return;
+            this.connection.send({
+                type: 'start',
+                seed: seed
+            });
+        }
+        
+        generateGameCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = 'SNAKE-';
+            for (let i = 0; i < 4; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+        
+        on(event, callback) {
+            this.callbacks[event] = callback;
+        }
+        
+        disconnect() {
+            if (this.connection) {
+                this.connection.close();
+            }
+            if (this.peer) {
+                this.peer.destroy();
+            }
+            this.isConnected = false;
+            this.connection = null;
+            this.peer = null;
+        }
+        
+        getGameCode() {
+            return this.gameCode;
+        }
+        
+        getOpponentSnake() {
+            return this.opponentSnake;
+        }
+        
+        getOpponentScore() {
+            return this.opponentScore;
+        }
+    }
+
+    // ==========================================================================
+    // INPUT MANAGER - Handles keyboard, touch, and swipe with input buffering
+    // ==========================================================================
+    class InputManager {
+        constructor() {
+            this.inputBuffer = [];
+            this.maxBufferSize = GameConfig.INPUT_BUFFER_SIZE;
+            
+            // Direction vectors for each input
+            this.directionMap = {
+                'up':    { x: 0, y: -1 },
+                'down':  { x: 0, y: 1 },
+                'left':  { x: -1, y: 0 },
+                'right': { x: 1, y: 0 }
+            };
+            
+            // Track bound handlers for cleanup
+            this.keyHandler = null;
+            this.touchHandler = null;
+            
+            // Swipe detection
+            this.touchStartX = 0;
+            this.touchStartY = 0;
+            this.swipeThreshold = 30;  // Minimum pixels for swipe detection
+            this.swipeHandlers = {};
+        }
+
+        /**
+         * Initialize input listeners
+         * @param {Function} onPause - Callback for pause toggle
+         * @param {Function} onRestart - Callback for restart
+         * @param {HTMLElement} swipeTarget - Element to attach swipe listeners to
+         */
+        init(onPause, onRestart, swipeTarget = null) {
+            this.onPause = onPause;
+            this.onRestart = onRestart;
+            
+            // Keyboard input
+            this.keyHandler = (e) => this.handleKeyDown(e);
+            window.addEventListener('keydown', this.keyHandler);
+            
+            // Touch controls
+            const touchBtns = document.querySelectorAll('.touch-btn[data-dir]');
+            this.touchHandler = (e) => {
+                const dir = e.currentTarget.dataset.dir;
+                if (dir) this.queueDirection(dir);
+            };
+            touchBtns.forEach(btn => {
+                btn.addEventListener('touchstart', this.touchHandler);
+                btn.addEventListener('click', this.touchHandler);
+            });
+            
+            // Swipe gesture detection on canvas
+            if (swipeTarget) {
+                this.initSwipeGestures(swipeTarget);
+            }
+        }
+        
+        /**
+         * Initialize swipe gesture detection for touch screens
+         */
+        initSwipeGestures(target) {
+            this.swipeHandlers.touchstart = (e) => {
+                const touch = e.touches[0];
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+            };
+            
+            this.swipeHandlers.touchmove = (e) => {
+                // Prevent scrolling while swiping on canvas
+                e.preventDefault();
+            };
+            
+            this.swipeHandlers.touchend = (e) => {
+                if (!e.changedTouches[0]) return;
+                
+                const touch = e.changedTouches[0];
+                const deltaX = touch.clientX - this.touchStartX;
+                const deltaY = touch.clientY - this.touchStartY;
+                const absX = Math.abs(deltaX);
+                const absY = Math.abs(deltaY);
+                
+                // Check if swipe was long enough
+                if (Math.max(absX, absY) < this.swipeThreshold) {
+                    // Tap - could be pause
+                    if (absX < 10 && absY < 10) {
+                        this.onPause?.();
+                    }
+                    return;
+                }
+                
+                // Determine swipe direction (use the dominant axis)
+                if (absX > absY) {
+                    // Horizontal swipe
+                    this.queueDirection(deltaX > 0 ? 'right' : 'left');
+                } else {
+                    // Vertical swipe
+                    this.queueDirection(deltaY > 0 ? 'down' : 'up');
+                }
+            };
+            
+            target.addEventListener('touchstart', this.swipeHandlers.touchstart, { passive: true });
+            target.addEventListener('touchmove', this.swipeHandlers.touchmove, { passive: false });
+            target.addEventListener('touchend', this.swipeHandlers.touchend, { passive: true });
+        }
+
+        handleKeyDown(e) {
+            // Map keys to directions
+            const keyMap = {
+                'ArrowUp': 'up', 'KeyW': 'up',
+                'ArrowDown': 'down', 'KeyS': 'down',
+                'ArrowLeft': 'left', 'KeyA': 'left',
+                'ArrowRight': 'right', 'KeyD': 'right'
+            };
+            
+            const direction = keyMap[e.code];
+            if (direction) {
+                e.preventDefault();  // Prevent page scrolling
+                this.queueDirection(direction);
+                return;
+            }
+            
+            // Meta keys
+            if (e.code === 'Space') {
+                e.preventDefault();
+                this.onPause?.();
+            } else if (e.code === 'Enter') {
+                e.preventDefault();
+                this.onRestart?.();
+            }
+        }
+
+        /**
+         * Queue a direction change with buffer limit.
+         * 
+         * WHY INPUT BUFFERING?
+         * When player rapidly presses UP then RIGHT to make a quick turn,
+         * without buffering the RIGHT press could be lost if it happens
+         * before the next game tick processes UP. This creates frustrating
+         * "dropped input" feeling. Buffer stores last N inputs for processing.
+         */
+        queueDirection(direction) {
+            if (this.inputBuffer.length < this.maxBufferSize) {
+                this.inputBuffer.push(direction);
+            }
+        }
+
+        /**
+         * Get next buffered direction, if any
+         * @returns {Object|null} Direction vector or null
+         */
+        consumeInput() {
+            if (this.inputBuffer.length === 0) return null;
+            const dir = this.inputBuffer.shift();
+            return this.directionMap[dir];
+        }
+
+        /**
+         * Clear all buffered inputs (on game restart)
+         */
+        clearBuffer() {
+            this.inputBuffer = [];
+        }
+
+        destroy() {
+            if (this.keyHandler) {
+                window.removeEventListener('keydown', this.keyHandler);
+            }
+        }
+    }
+
+    // ==========================================================================
+    // GAME STATE - Pure game logic, no rendering knowledge
+    // ==========================================================================
+    class GameState {
+        constructor() {
+            this.difficulty = DifficultyLevels[currentDifficulty];
+            this.reset();
+        }
+
+        /**
+         * Set difficulty level
+         * @param {string} level - 'easy', 'medium', 'hard', 'insane'
+         */
+        setDifficulty(level) {
+            if (DifficultyLevels[level]) {
+                this.difficulty = DifficultyLevels[level];
+                currentDifficulty = level;
+            }
+        }
+
+        reset() {
+            const gridSize = GameConfig.GRID_SIZE;
+            const startX = Math.floor(gridSize / 2);
+            const startY = Math.floor(gridSize / 2);
+            
+            // Refresh difficulty settings
+            this.difficulty = DifficultyLevels[currentDifficulty];
+            
+            // Initialize snake at center, facing right
+            this.snake = [];
+            for (let i = 0; i < GameConfig.INITIAL_LENGTH; i++) {
+                this.snake.push({ x: startX - i, y: startY });
+            }
+            
+            this.direction = { x: 1, y: 0 };  // Moving right
+            this.nextDirection = { x: 1, y: 0 };
+            this.food = null;
+            this.score = 0;
+            // Use difficulty-based speed
+            this.moveInterval = this.difficulty.initialSpeed;
+            this.gameOver = false;
+            this.foodEatenThisTick = false;
+            
+            // Combo system: rewards quick consecutive food collection
+            this.combo = 0;
+            this.comboTimer = 0;
+            this.comboTimeout = 5000;  // 5 seconds to maintain combo
+            this.lastFoodTime = 0;
+            
+            this.spawnFood();
+        }
+        
+        /**
+         * Update combo timer (called every frame)
+         * @param {number} deltaTime - Time since last frame in ms
+         */
+        updateCombo(deltaTime) {
+            if (this.combo > 0) {
+                this.comboTimer += deltaTime;
+                if (this.comboTimer >= this.comboTimeout) {
+                    this.combo = 0;
+                    this.comboTimer = 0;
+                }
+            }
+        }
+        
+        /**
+         * Get current speed level (1-10) for display
+         */
+        getSpeedLevel() {
+            const diff = this.difficulty;
+            const range = diff.initialSpeed - diff.minSpeed;
+            const current = diff.initialSpeed - this.moveInterval;
+            return Math.min(10, Math.floor((current / range) * 9) + 1);
+        }
+
+        /**
+         * Spawn food at random empty cell.
+         * Uses rejection sampling - simple and fast for sparse grids.
+         * @param {LevelManager} levelManager - Optional, to avoid walls
+         */
+        spawnFood(levelManager = null) {
+            const gridSize = GameConfig.GRID_SIZE;
+            let attempts = 0;
+            const maxAttempts = gridSize * gridSize;
+            
+            do {
+                this.food = {
+                    x: Math.floor(Math.random() * gridSize),
+                    y: Math.floor(Math.random() * gridSize)
+                };
+                attempts++;
+                
+                // Edge case: grid nearly full, find any empty cell
+                if (attempts > maxAttempts) {
+                    this.food = this.findEmptyCell(levelManager);
+                    break;
+                }
+            } while (this.isCellOccupied(this.food.x, this.food.y) || 
+                     (levelManager && levelManager.isWall(this.food.x, this.food.y)));
+        }
+
+        /**
+         * Fallback for nearly-full grid: scan for empty cell
+         * O(n) but only used in edge case
+         */
+        findEmptyCell(levelManager = null) {
+            const gridSize = GameConfig.GRID_SIZE;
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (!this.isCellOccupied(x, y) && 
+                        (!levelManager || !levelManager.isWall(x, y))) {
+                        return { x, y };
+                    }
+                }
+            }
+            return null;  // Grid completely full - player wins!
+        }
+
+        isCellOccupied(x, y) {
+            return this.snake.some(seg => seg.x === x && seg.y === y);
+        }
+
+        /**
+         * Apply a direction change if valid (not 180-degree turn)
+         * @param {Object} newDir - New direction vector
+         * @returns {boolean} Whether direction was applied
+         */
+        setDirection(newDir) {
+            if (!newDir) return false;
+            
+            // Prevent 180-degree turns (instant death)
+            const isOpposite = (
+                newDir.x === -this.direction.x && 
+                newDir.y === -this.direction.y
+            );
+            
+            if (!isOpposite) {
+                this.nextDirection = newDir;
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Main game tick - move snake, check collisions
+         * @param {LevelManager} levelManager - For wall/portal checks
+         * @param {PowerUpManager} powerUpManager - For power-up effects
+         * @returns {string} Event that occurred: 'move', 'eat', 'death', 'win', 'portal', 'levelup'
+         * 
+         * WALL WRAPPING LOGIC:
+         * Instead of dying on wall collision, snake wraps to opposite side.
+         * This creates a toroidal (donut-shaped) play field like classic
+         * arcade games. Only self-collision causes death.
+         */
+        update(levelManager = null, powerUpManager = null) {
+            if (this.gameOver) return 'none';
+            
+            this.foodEatenThisTick = false;
+            this.direction = this.nextDirection;
+            
+            // Calculate new head position
+            const head = this.snake[0];
+            let newHead = {
+                x: head.x + this.direction.x,
+                y: head.y + this.direction.y
+            };
+            
+            // WALL WRAPPING: Snake teleports to opposite wall
+            const gridSize = GameConfig.GRID_SIZE;
+            if (newHead.x < 0) {
+                newHead.x = gridSize - 1;  // Left wall -> Right side
+            } else if (newHead.x >= gridSize) {
+                newHead.x = 0;              // Right wall -> Left side
+            }
+            if (newHead.y < 0) {
+                newHead.y = gridSize - 1;  // Top wall -> Bottom side
+            } else if (newHead.y >= gridSize) {
+                newHead.y = 0;              // Bottom wall -> Top side
+            }
+            
+            // Check portal teleportation
+            let usedPortal = false;
+            if (levelManager) {
+                const portalExit = levelManager.checkPortal(newHead.x, newHead.y);
+                if (portalExit) {
+                    newHead = { x: portalExit.x, y: portalExit.y };
+                    usedPortal = true;
+                }
+            }
+            
+            // Check wall collision (unless ghost mode active)
+            const isGhost = powerUpManager && powerUpManager.hasEffect('ghost');
+            if (levelManager && !isGhost && levelManager.isWall(newHead.x, newHead.y)) {
+                this.gameOver = true;
+                return 'death';
+            }
+            
+            // Self collision check - ONLY way to die (besides walls)!
+            // Ghost mode allows passing through own body
+            if (!isGhost) {
+                for (let i = 0; i < this.snake.length - 1; i++) {
+                    if (this.snake[i].x === newHead.x && 
+                        this.snake[i].y === newHead.y) {
+                        this.gameOver = true;
+                        return 'death';
+                    }
+                }
+            }
+            
+            // Add new head
+            this.snake.unshift(newHead);
+            
+            // Food collision check
+            if (this.food && newHead.x === this.food.x && newHead.y === this.food.y) {
+                this.foodEatenThisTick = true;
+                
+                // Combo system - eating food quickly builds combo
+                const now = performance.now();
+                if (this.lastFoodTime > 0 && (now - this.lastFoodTime) < this.comboTimeout) {
+                    this.combo = Math.min(this.combo + 1, 10);  // Max combo x10
+                } else {
+                    this.combo = 1;
+                }
+                this.comboTimer = 0;
+                this.lastFoodTime = now;
+                
+                // Score with combo multiplier
+                const baseScore = 10;
+                const comboBonus = this.combo > 1 ? (this.combo - 1) * 5 : 0;
+                
+                // Apply score multiplier from power-up
+                const multiplier = (powerUpManager && powerUpManager.hasEffect('multiplier')) ? 2 : 1;
+                this.score += (baseScore + comboBonus) * multiplier;
+                
+                // Increase speed based on difficulty settings
+                this.moveInterval = Math.max(
+                    this.difficulty.minSpeed,
+                    this.moveInterval - this.difficulty.speedIncrement
+                );
+                
+                // Check win condition (filled entire grid)
+                if (this.snake.length >= gridSize * gridSize) {
+                    this.food = null;
+                    return 'win';
+                }
+                
+                // Check level up in levels mode
+                if (levelManager && levelManager.checkLevelUp(this.score)) {
+                    this.spawnFood(levelManager);
+                    return 'levelup';
+                }
+                
+                this.spawnFood(levelManager);
+                return usedPortal ? 'portal' : 'eat';
+            } else {
+                // Remove tail (snake moves without growing)
+                this.snake.pop();
+            }
+            
+            return usedPortal ? 'portal' : 'move';
+        }
+        
+        /**
+         * Get current speed modified by power-ups
+         */
+        getMoveInterval(powerUpManager = null) {
+            let interval = this.moveInterval;
+            if (powerUpManager) {
+                if (powerUpManager.hasEffect('speed')) {
+                    interval *= 0.6;  // 40% faster
+                }
+                if (powerUpManager.hasEffect('slow')) {
+                    interval *= 1.5;  // 50% slower
+                }
+            }
+            return interval;
+        }
+    }
+
+    // ==========================================================================
+    // RENDERER - Canvas drawing and visual effects
+    // ==========================================================================
+    class Renderer {
+        constructor(canvas) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d', { alpha: false });
+            
+            // Pixel-perfect rendering
+            this.ctx.imageSmoothingEnabled = false;
+            
+            this.cellSize = GameConfig.CELL_SIZE;
+            this.gridSize = GameConfig.GRID_SIZE;
+            this.colors = { ...GameConfig.COLORS };  // Copy default colors
+            
+            // Animation state
+            this.foodPulse = 0;
+            this.deathFlash = 0;
+            this.portalPulse = 0;
+            this.powerUpPulse = 0;
+        }
+        
+        /**
+         * Apply a theme's color palette
+         */
+        setTheme(themeId) {
+            if (!Themes[themeId]) return;
+            
+            const theme = Themes[themeId];
+            // Map theme properties to renderer color format
+            this.colors = {
+                BACKGROUND: theme.background,
+                GRID: theme.grid,
+                SNAKE_HEAD: theme.snakeHead,
+                SNAKE_BODY: theme.snakeBody,
+                SNAKE_TAIL: theme.snakeTail,
+                FOOD: theme.food,
+                FOOD_GLOW: theme.foodGlow,
+                WALL: theme.wall,
+                WALL_ACCENT: theme.wall + 'aa',  // Slightly transparent version
+                TEXT: theme.text,
+                TEXT_DIM: theme.textDim,
+                ACCENT: theme.powerup
+            };
+        }
+
+        /**
+         * Clear and draw grid background
+         */
+        drawBackground() {
+            const { ctx, canvas, colors, cellSize, gridSize } = this;
+            
+            // Fill background
+            ctx.fillStyle = colors.BACKGROUND;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw subtle grid lines
+            ctx.strokeStyle = colors.GRID;
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= gridSize; i++) {
+                const pos = i * cellSize;
+                
+                // Vertical line
+                ctx.beginPath();
+                ctx.moveTo(pos + 0.5, 0);
+                ctx.lineTo(pos + 0.5, canvas.height);
+                ctx.stroke();
+                
+                // Horizontal line
+                ctx.beginPath();
+                ctx.moveTo(0, pos + 0.5);
+                ctx.lineTo(canvas.width, pos + 0.5);
+                ctx.stroke();
+            }
+        }
+
+        /**
+         * Draw snake with gradient body and distinct head
+         */
+        drawSnake(snake, skinId = 'default') {
+            const { ctx, cellSize, colors } = this;
+            const padding = 1;  // Gap between cells for clarity
+            const skin = SnakeSkins[skinId] || SnakeSkins.default;
+            
+            // Get skin colors - handle both object {head,body,tail} and null (rainbow)
+            const skinColors = skin.colors ? 
+                (typeof skin.colors === 'object' ? skin.colors : null) : null;
+            
+            snake.forEach((segment, index) => {
+                const x = segment.x * cellSize + padding;
+                const y = segment.y * cellSize + padding;
+                const size = cellSize - padding * 2;
+                
+                // Get color based on skin pattern
+                let fillColor;
+                const t = index / snake.length; // 0 = head, 1 = tail
+                
+                if (skin.pattern === 'rainbow' || !skinColors) {
+                    // Dynamic rainbow colors
+                    const hue = (index * 20 + performance.now() / 20) % 360;
+                    fillColor = `hsl(${hue}, 100%, 50%)`;
+                } else if (skin.pattern === 'gradient' || skin.pattern === 'solid') {
+                    // Use head/body/tail colors based on position
+                    if (index === 0) {
+                        fillColor = skinColors.head;
+                    } else if (t < 0.7) {
+                        fillColor = skinColors.body;
+                    } else {
+                        fillColor = skinColors.tail;
+                    }
+                } else if (skin.pattern === 'pulse') {
+                    const pulse = Math.sin(performance.now() / 200 + index * 0.5) * 0.3 + 0.7;
+                    fillColor = skinColors.body;
+                    ctx.globalAlpha = pulse;
+                } else if (skin.pattern === 'checker') {
+                    fillColor = index % 2 === 0 ? skinColors.head : skinColors.body;
+                } else if (skin.pattern === 'scales') {
+                    fillColor = index % 3 === 0 ? skinColors.head : skinColors.body;
+                } else if (skin.pattern === 'fade') {
+                    fillColor = skinColors.body;
+                    ctx.globalAlpha = 1 - t * 0.6;
+                } else {
+                    // Default fallback
+                    fillColor = index === 0 ? skinColors.head : skinColors.body;
+                }
+                
+                // Head is brightest, body fades toward tail
+                if (index === 0) {
+                    ctx.fillStyle = fillColor || colors.SNAKE_HEAD;
+                    
+                    // Draw head
+                    ctx.fillRect(x, y, size, size);
+                    
+                    // Simple eyes based on direction
+                    ctx.fillStyle = colors.BACKGROUND;
+                    const eyeSize = 3;
+                    const eyeOffset = 4;
+                    ctx.fillRect(x + eyeOffset, y + eyeOffset, eyeSize, eyeSize);
+                    ctx.fillRect(x + size - eyeOffset - eyeSize, y + eyeOffset, eyeSize, eyeSize);
+                    
+                } else {
+                    ctx.fillStyle = fillColor || colors.SNAKE_BODY;
+                    ctx.fillRect(x, y, size, size);
+                    
+                    // Trail effect for certain skins
+                    if (skin.trailEffect === 'sparkle' && Math.random() < 0.1) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                        ctx.fillRect(x + size/4, y + size/4, size/2, size/2);
+                    }
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        /**
+         * Draw boss snake (enemy AI)
+         */
+        drawBossSnake(boss) {
+            if (!boss || !boss.body || boss.body.length === 0) return;
+            
+            const { ctx, cellSize } = this;
+            const padding = 1;
+            
+            boss.body.forEach((segment, index) => {
+                const x = segment.x * cellSize + padding;
+                const y = segment.y * cellSize + padding;
+                const size = cellSize - padding * 2;
+                
+                // Boss colors - red/orange gradient
+                const t = index / boss.body.length;
+                const r = Math.floor(255 - t * 100);
+                const g = Math.floor(50 + t * 50);
+                
+                if (index === 0) {
+                    // Boss head
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(x, y, size, size);
+                    
+                    // Angry eyes
+                    ctx.fillStyle = '#ffff00';
+                    const eyeSize = 4;
+                    ctx.fillRect(x + 3, y + 3, eyeSize, eyeSize);
+                    ctx.fillRect(x + size - 7, y + 3, eyeSize, eyeSize);
+                    
+                    // Evil pupils
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(x + 4, y + 4, 2, 2);
+                    ctx.fillRect(x + size - 6, y + 4, 2, 2);
+                } else {
+                    ctx.fillStyle = `rgb(${r},${g},0)`;
+                    ctx.fillRect(x, y, size, size);
+                }
+            });
+        }
+        
+        /**
+         * Draw ghost replay snake (transparent)
+         */
+        drawGhostSnake(snake) {
+            if (!snake || snake.length === 0) return;
+            
+            const { ctx, cellSize } = this;
+            const padding = 1;
+            
+            ctx.globalAlpha = 0.3;
+            
+            snake.forEach((segment, index) => {
+                const x = segment.x * cellSize + padding;
+                const y = segment.y * cellSize + padding;
+                const size = cellSize - padding * 2;
+                
+                ctx.fillStyle = index === 0 ? '#9966ff' : '#6644aa';
+                ctx.fillRect(x, y, size, size);
+            });
+            
+            ctx.globalAlpha = 1;
+        }
+
+        /**
+         * Draw food with pulsing glow effect
+         */
+        drawFood(food, deltaTime) {
+            if (!food) return;
+            
+            const { ctx, cellSize, colors } = this;
+            
+            // Update pulse animation
+            this.foodPulse += GameConfig.FOOD_PULSE_SPEED * deltaTime;
+            const pulse = Math.sin(this.foodPulse) * 0.3 + 0.7;
+            
+            const padding = 2;
+            const x = food.x * cellSize + padding;
+            const y = food.y * cellSize + padding;
+            const size = cellSize - padding * 2;
+            
+            // Glow effect
+            ctx.fillStyle = colors.FOOD_GLOW;
+            const glowExpand = (1 - pulse) * 4;
+            ctx.fillRect(
+                x - glowExpand, 
+                y - glowExpand, 
+                size + glowExpand * 2, 
+                size + glowExpand * 2
+            );
+            
+            // Main food
+            ctx.fillStyle = colors.FOOD;
+            ctx.globalAlpha = 0.7 + pulse * 0.3;
+            ctx.fillRect(x, y, size, size);
+            ctx.globalAlpha = 1;
+        }
+        
+        /**
+         * Draw walls/obstacles
+         */
+        drawWalls(walls) {
+            if (!walls || walls.length === 0) return;
+            
+            const { ctx, cellSize, colors } = this;
+            
+            ctx.fillStyle = colors.WALL || '#666';
+            
+            walls.forEach(wall => {
+                const x = wall.x * cellSize;
+                const y = wall.y * cellSize;
+                
+                // Draw solid wall block with slight border
+                ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+                
+                // Add brick-like pattern
+                ctx.strokeStyle = colors.WALL_ACCENT || '#555';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+            });
+        }
+        
+        /**
+         * Draw portal pairs with pulsing animation
+         */
+        drawPortals(portals, deltaTime) {
+            if (!portals || portals.length === 0) return;
+            
+            const { ctx, cellSize, colors } = this;
+            
+            // Update portal animation
+            this.portalPulse += deltaTime * 0.005;
+            const pulse = (Math.sin(this.portalPulse) + 1) * 0.5;
+            
+            portals.forEach((portal, index) => {
+                // Different color per portal pair
+                const hue = (index * 60) % 360;
+                const entryColor = `hsla(${hue}, 80%, 50%, ${0.6 + pulse * 0.4})`;
+                const exitColor = `hsla(${hue + 180}, 80%, 50%, ${0.6 + pulse * 0.4})`;
+                
+                // Draw entry
+                const ex = portal.entry.x * cellSize + cellSize / 2;
+                const ey = portal.entry.y * cellSize + cellSize / 2;
+                const radius = (cellSize / 2 - 2) * (0.8 + pulse * 0.2);
+                
+                ctx.beginPath();
+                ctx.arc(ex, ey, radius, 0, Math.PI * 2);
+                ctx.fillStyle = entryColor;
+                ctx.fill();
+                
+                // Inner ring
+                ctx.beginPath();
+                ctx.arc(ex, ey, radius * 0.5, 0, Math.PI * 2);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw exit
+                const px = portal.exit.x * cellSize + cellSize / 2;
+                const py = portal.exit.y * cellSize + cellSize / 2;
+                
+                ctx.beginPath();
+                ctx.arc(px, py, radius, 0, Math.PI * 2);
+                ctx.fillStyle = exitColor;
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(px, py, radius * 0.5, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+        }
+        
+        /**
+         * Draw power-up item on field
+         */
+        drawPowerUp(powerUp, deltaTime) {
+            if (!powerUp) return;
+            
+            const { ctx, cellSize } = this;
+            
+            // Update animation
+            this.powerUpPulse += deltaTime * 0.008;
+            const pulse = (Math.sin(this.powerUpPulse * 2) + 1) * 0.5;
+            const bounce = Math.sin(this.powerUpPulse * 3) * 2;
+            
+            const x = powerUp.x * cellSize + cellSize / 2;
+            const y = powerUp.y * cellSize + cellSize / 2 + bounce;
+            const radius = (cellSize / 2 - 2) * (0.9 + pulse * 0.1);
+            
+            // Glow effect
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+            ctx.fillStyle = powerUp.color.replace(')', ', 0.3)').replace('rgb', 'rgba');
+            ctx.fill();
+            
+            // Main orb
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = powerUp.color;
+            ctx.fill();
+            
+            // Icon/symbol inside
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(powerUp.symbol || '?', x, y);
+        }
+        
+        /**
+         * Draw snake with ghost effect when power-up active
+         */
+        drawSnakeWithEffects(snake, isGhost = false) {
+            const { ctx, cellSize, colors } = this;
+            const padding = 1;
+            
+            if (isGhost) {
+                ctx.globalAlpha = 0.5;
+            }
+            
+            snake.forEach((segment, index) => {
+                const x = segment.x * cellSize + padding;
+                const y = segment.y * cellSize + padding;
+                const size = cellSize - padding * 2;
+                
+                if (index === 0) {
+                    ctx.fillStyle = isGhost ? 'rgba(150, 200, 255, 0.8)' : colors.SNAKE_HEAD;
+                    ctx.fillRect(x, y, size, size);
+                    
+                    // Eyes
+                    ctx.fillStyle = colors.BACKGROUND;
+                    const eyeSize = 3;
+                    const eyeOffset = 4;
+                    ctx.fillRect(x + eyeOffset, y + eyeOffset, eyeSize, eyeSize);
+                    ctx.fillRect(x + size - eyeOffset - eyeSize, y + eyeOffset, eyeSize, eyeSize);
+                } else {
+                    const t = index / snake.length;
+                    ctx.fillStyle = t < 0.7 ? colors.SNAKE_BODY : colors.SNAKE_TAIL;
+                    ctx.fillRect(x, y, size, size);
+                }
+            });
+            
+            ctx.globalAlpha = 1;
+        }
+
+        /**
+         * Draw centered text overlay
+         */
+        drawTextOverlay(title, subtitle = '', color = this.colors.TEXT) {
+            const { ctx, canvas, colors } = this;
+            
+            // Semi-transparent backdrop
+            ctx.fillStyle = 'rgba(15, 15, 35, 0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Title
+            ctx.fillStyle = color;
+            ctx.font = 'bold 28px "Courier New", monospace';
+            ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 20);
+            
+            // Subtitle
+            if (subtitle) {
+                ctx.fillStyle = colors.TEXT_DIM;
+                ctx.font = '14px "Courier New", monospace';
+                ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 20);
+            }
+        }
+
+        /**
+         * Draw boot/startup screen
+         */
+        drawBootScreen(progress) {
+            const { ctx, canvas, colors } = this;
+            
+            ctx.fillStyle = colors.BACKGROUND;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Title
+            ctx.fillStyle = colors.SNAKE_HEAD;
+            ctx.font = 'bold 36px "Courier New", monospace';
+            ctx.fillText('SNAKE', canvas.width / 2, canvas.height / 2 - 50);
+            
+            // Subtitle hint
+            ctx.fillStyle = colors.ACCENT;
+            ctx.font = '12px "Courier New", monospace';
+            ctx.fillText('Walls wrap around! Only hit yourself to lose.', canvas.width / 2, canvas.height / 2 - 15);
+            
+            // Loading bar
+            const barWidth = 200;
+            const barHeight = 8;
+            const barX = (canvas.width - barWidth) / 2;
+            const barY = canvas.height / 2 + 30;
+            
+            ctx.fillStyle = colors.GRID;
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            
+            ctx.fillStyle = colors.SNAKE_HEAD;
+            ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+            
+            // Version text
+            ctx.fillStyle = colors.TEXT_DIM;
+            ctx.font = '10px "Courier New", monospace';
+            ctx.fillText('v3.0 - RETRO EDITION', canvas.width / 2, canvas.height - 30);
+        }
+
+        /**
+         * Main render call
+         */
+        render(gameState, state, deltaTime, particles = null, isNewHighScore = false) {
+            this.drawBackground();
+            
+            if (state === 'BOOT') {
+                return;  // Boot screen handled separately
+            }
+            
+            this.drawFood(gameState.food, deltaTime);
+            this.drawSnake(gameState.snake);
+            
+            // Render particles on top
+            if (particles) {
+                particles.render(this.ctx);
+            }
+            
+            if (state === 'PAUSED') {
+                this.drawTextOverlay('PAUSED', 'Press SPACE to continue');
+            } else if (state === 'GAME_OVER') {
+                const diffName = gameState.difficulty.name;
+                const title = isNewHighScore ? 'NEW HIGH SCORE!' : 'GAME OVER';
+                const color = isNewHighScore ? this.colors.ACCENT : this.colors.FOOD;
+                this.drawTextOverlay(
+                    title,
+                    `${diffName} | Score: ${gameState.score} | Press ENTER`,
+                    color
+                );
+            }
+        }
+    }
+
+    // ==========================================================================
+    // GAME - Main controller with fixed-timestep game loop
+    // ==========================================================================
+    class Game {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.scoreElement = document.getElementById('score');
+            this.highScoreElement = document.getElementById('highScore');
+            this.comboElement = document.getElementById('comboDisplay');
+            this.speedElement = document.getElementById('speedLevel');
+            this.canvasWrapper = document.getElementById('canvasWrapper');
+            this.soundToggle = document.getElementById('soundToggle');
+            this.countdownOverlay = document.getElementById('countdownOverlay');
+            this.countdownNumber = document.getElementById('countdownNumber');
+            this.timerDisplay = document.getElementById('timerDisplay');
+            this.levelDisplay = document.getElementById('levelDisplay');
+            this.powerUpBar = document.getElementById('powerUpBar');
+            this.survivalWarning = document.getElementById('survivalWarning');
+            this.accessibilityBtn = document.getElementById('accessibilityToggle');
+            
+            // New UI elements
+            this.multiplayerPanel = document.getElementById('multiplayerPanel');
+            this.bossHealthContainer = document.getElementById('bossHealthContainer');
+            this.bossHealthFill = document.getElementById('bossHealthFill');
+            this.bossNameEl = document.getElementById('bossName');
+            this.skinSelector = document.getElementById('skinSelector');
+            this.skinDropdown = document.getElementById('skinDropdown');
+            this.unlockNotification = document.getElementById('unlockNotification');
+            this.unlockText = document.getElementById('unlockText');
+            
+            this.renderer = new Renderer(this.canvas);
+            this.audio = new AudioManager();
+            this.input = new InputManager();
+            this.gameState = new GameState();
+            this.particles = new ParticleSystem();
+            this.powerUpManager = new PowerUpManager();
+            this.levelManager = new LevelManager();
+            
+            // New managers
+            this.skinManager = new SkinManager();
+            this.replayManager = new ReplayManager();
+            this.bossManager = new BossManager();
+            this.multiplayerManager = new MultiplayerManager();
+            
+            // Game mode and theme
+            this.currentMode = 'classic';
+            this.currentTheme = 'retro';
+            this.timedModeTimer = 0;
+            this.survivalWarningShown = false;
+            
+            // New mode states
+            this.currentSkin = localStorage.getItem('snakeSelectedSkin') || 'default';
+            this.ghostReplay = null;
+            this.isGhostMode = false;
+            
+            // High score from localStorage
+            this.highScore = this.loadHighScore();
+            this.isNewHighScore = false;
+            this.updateHighScoreDisplay();
+            
+            // Game states: BOOT, COUNTDOWN, PLAYING, PAUSED, GAME_OVER
+            this.state = 'BOOT';
+            this.bootStartTime = 0;
+            this.countdownValue = 3;
+            this.countdownTimer = 0;
+            
+            // Fixed-timestep loop variables
+            this.lastTime = 0;
+            this.accumulator = 0;
+            this.animationId = null;
+            
+            this.init();
+        }
+
+        init() {
+            // Setup input handlers with swipe support
+            this.input.init(
+                () => this.togglePause(),
+                () => this.restart(),
+                this.canvas  // Swipe target
+            );
+            
+            // Setup difficulty buttons
+            this.initDifficultyButtons();
+            
+            // Setup sound toggle
+            this.initSoundToggle();
+            
+            // Setup theme buttons
+            this.initThemeButtons();
+            
+            // Setup game mode selector
+            this.initModeSelector();
+            
+            // Setup accessibility toggle
+            this.initAccessibility();
+            
+            // Setup new features
+            this.initSkinSelector();
+            this.initMultiplayer();
+            
+            // Setup mute key (M)
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'KeyM') {
+                    this.toggleSound();
+                }
+            });
+            
+            // Initialize audio on first interaction
+            const initAudio = () => {
+                this.audio.init();
+                document.removeEventListener('keydown', initAudio);
+                document.removeEventListener('click', initAudio);
+                document.removeEventListener('touchstart', initAudio);
+            };
+            document.addEventListener('keydown', initAudio);
+            document.addEventListener('click', initAudio);
+            document.addEventListener('touchstart', initAudio);
+            
+            // Start boot sequence
+            this.bootStartTime = performance.now();
+            this.state = 'BOOT';
+            
+            // Start game loop
+            this.lastTime = performance.now();
+            this.loop(this.lastTime);
+        }
+        
+        // ==================== THEME SELECTION ====================
+        
+        initThemeButtons() {
+            const buttons = document.querySelectorAll('.theme-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const theme = e.target.dataset.theme;
+                    if (theme) {
+                        this.setTheme(theme);
+                    }
+                });
+            });
+        }
+        
+        setTheme(themeId) {
+            if (!Themes[themeId]) return;
+            
+            this.currentTheme = themeId;
+            this.renderer.setTheme(themeId);
+            
+            // Update button UI
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.theme === themeId) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // ==================== GAME MODE SELECTION ====================
+        
+        initModeSelector() {
+            const buttons = document.querySelectorAll('.mode-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const mode = e.target.dataset.mode;
+                    if (mode) {
+                        this.setGameMode(mode);
+                    }
+                });
+            });
+        }
+        
+        setGameMode(modeId) {
+            if (!GameModes[modeId]) return;
+            
+            this.currentMode = modeId;
+            
+            // Update button UI
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === modeId) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Update UI visibility
+            this.timerDisplay.style.display = (modeId === 'timed') ? 'block' : 'none';
+            this.levelDisplay.style.display = (modeId === 'levels') ? 'block' : 'none';
+            this.survivalWarning.style.display = 'none';
+            
+            // Show/hide multiplayer panel
+            if (this.multiplayerPanel) {
+                this.multiplayerPanel.style.display = (modeId === 'multiplayer') ? 'flex' : 'none';
+            }
+            
+            // Show/hide boss health bar
+            if (this.bossHealthContainer) {
+                this.bossHealthContainer.style.display = (modeId === 'boss') ? 'flex' : 'none';
+            }
+            
+            // Handle ghost mode
+            this.isGhostMode = (modeId === 'ghost');
+            if (this.isGhostMode) {
+                this.loadBestReplay();
+            }
+            
+            // Reset game with new mode
+            if (this.state !== 'BOOT') {
+                this.gameState.reset();
+                this.particles.clear();
+                this.input.clearBuffer();
+                this.powerUpManager.reset();
+                this.levelManager.reset();
+                this.bossManager.reset();
+                this.accumulator = 0;
+                this.isNewHighScore = false;
+                
+                // Mode-specific initialization
+                this.timedModeTimer = (modeId === 'timed') ? GameModes.timed.timeLimit : 0;
+                this.survivalWarningShown = false;
+                
+                if (modeId === 'levels') {
+                    this.levelManager.loadLevel(0);
+                    this.gameState.spawnFood(this.levelManager);
+                    this.updateLevelDisplay();
+                }
+                
+                if (modeId === 'boss') {
+                    this.bossManager.spawnBoss('python', this.gameState.gridWidth, this.gameState.gridHeight);
+                    this.updateBossHealthBar();
+                }
+                
+                this.updateScoreDisplay();
+                this.updateSpeedDisplay();
+                this.updateTimerDisplay();
+                this.comboElement.classList.remove('active');
+                this.survivalWarning.style.display = 'none';
+                this.powerUpBar.innerHTML = '';
+                
+                // For multiplayer, don't start countdown until connected
+                // For other modes, start immediately
+                if (modeId !== 'multiplayer') {
+                    this.startCountdown();
+                } else {
+                    // Set to a waiting state for multiplayer
+                    this.state = 'PAUSED';
+                    this.renderer.drawTextOverlay('MULTIPLAYER', 'Create or join a game to start');
+                }
+            }
+        }
+        
+        // ==================== ACCESSIBILITY ====================
+        
+        initAccessibility() {
+            if (this.accessibilityBtn) {
+                this.accessibilityBtn.addEventListener('click', () => {
+                    this.toggleAccessibility();
+                });
+            }
+        }
+        
+        toggleAccessibility() {
+            // Switch to colorblind-friendly theme
+            if (this.currentTheme === 'grayscale') {
+                this.setTheme('retro');
+                this.accessibilityBtn.classList.remove('active');
+            } else {
+                this.setTheme('grayscale');
+                this.accessibilityBtn.classList.add('active');
+            }
+        }
+        
+        // ==================== SKIN SELECTOR ====================
+        
+        initSkinSelector() {
+            const toggle = document.getElementById('skinToggle');
+            const dropdown = document.getElementById('skinDropdown');
+            
+            if (!toggle || !dropdown) return;
+            
+            // Toggle dropdown
+            toggle.addEventListener('click', () => {
+                const isVisible = dropdown.style.display !== 'none';
+                dropdown.style.display = isVisible ? 'none' : 'grid';
+                if (!isVisible) this.populateSkinDropdown();
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!this.skinSelector.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+        
+        populateSkinDropdown() {
+            const dropdown = document.getElementById('skinDropdown');
+            if (!dropdown) return;
+            
+            dropdown.innerHTML = '';
+            
+            for (const skinId in SnakeSkins) {
+                const skin = SnakeSkins[skinId];
+                const isUnlocked = this.skinManager.isUnlocked(skinId);
+                const isActive = this.currentSkin === skinId;
+                
+                const option = document.createElement('div');
+                option.className = 'skin-option' + (isActive ? ' active' : '') + (!isUnlocked ? ' locked' : '');
+                option.title = isUnlocked ? skin.name : `🔒 ${skin.unlockCondition || 'Locked'}`;
+                
+                // Handle colors - can be object {head, body, tail} or null for rainbow
+                if (skin.colors) {
+                    const colorValues = typeof skin.colors === 'object' 
+                        ? Object.values(skin.colors) 
+                        : [skin.colors];
+                    option.style.background = colorValues.length > 1 
+                        ? `linear-gradient(135deg, ${colorValues.join(', ')})` 
+                        : colorValues[0];
+                } else {
+                    // Rainbow skin
+                    option.style.background = 'linear-gradient(135deg, red, orange, yellow, green, blue, purple)';
+                }
+                
+                if (isUnlocked) {
+                    option.addEventListener('click', () => this.selectSkin(skinId));
+                }
+                
+                dropdown.appendChild(option);
+            }
+        }
+        
+        selectSkin(skinId) {
+            if (!this.skinManager.isUnlocked(skinId)) return;
+            
+            this.currentSkin = skinId;
+            this.populateSkinDropdown();
+            
+            // Save selection
+            try {
+                localStorage.setItem('snakeSelectedSkin', skinId);
+            } catch(e) {}
+        }
+        
+        checkSkinUnlocks() {
+            const stats = {
+                score: this.gameState.score,
+                wins: parseInt(localStorage.getItem('snakeWins') || '0'),
+                perfectLevels: parseInt(localStorage.getItem('snakePerfectLevels') || '0'),
+                gamesPlayed: parseInt(localStorage.getItem('snakeGamesPlayed') || '0'),
+                maxCombo: this.gameState.combo
+            };
+            
+            const newUnlocks = this.skinManager.checkUnlocks(stats);
+            newUnlocks.forEach(skinId => this.showUnlockNotification(skinId));
+        }
+        
+        showUnlockNotification(skinId) {
+            const skin = SnakeSkins[skinId];
+            if (!skin || !this.unlockNotification) return;
+            
+            this.unlockText.textContent = `${skin.name} Skin Unlocked!`;
+            this.unlockNotification.style.display = 'flex';
+            
+            setTimeout(() => {
+                this.unlockNotification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // ==================== MULTIPLAYER ====================
+        
+        initMultiplayer() {
+            const createBtn = document.getElementById('mpCreateBtn');
+            const joinBtn = document.getElementById('mpJoinBtn');
+            const confirmBtn = document.getElementById('mpConfirmBtn');
+            const copyBtn = document.getElementById('mpCopyBtn');
+            const codeInput = document.getElementById('mpCodeInput');
+            
+            // Setup multiplayer manager callbacks
+            this.multiplayerManager.callbacks.onConnect = () => {
+                this.updateMPStatus('Connected!', 'connected');
+                document.getElementById('mpOpponent').style.display = 'block';
+                
+                // Reset game state fresh before starting
+                this.gameState.reset();
+                this.particles.clear();
+                this.input.clearBuffer();
+                this.accumulator = 0;
+                this.isNewHighScore = false;
+                
+                this.startCountdown();
+            };
+            
+            this.multiplayerManager.callbacks.onOpponentUpdate = (data) => {
+                document.getElementById('opponentScore').textContent = data.score || 0;
+            };
+            
+            this.multiplayerManager.callbacks.onDisconnect = () => {
+                this.updateMPStatus('Opponent disconnected', '');
+            };
+            
+            // Create game button
+            if (createBtn) {
+                createBtn.addEventListener('click', () => {
+                    this.updateMPStatus('Creating game...', 'waiting');
+                    this.multiplayerManager.createGame().then((code) => {
+                        this.updateMPStatus('Waiting for opponent...', 'waiting');
+                        document.getElementById('mpGameCode').style.display = 'flex';
+                        document.getElementById('mpCodeDisplay').textContent = code;
+                        document.getElementById('mpButtons').style.display = 'none';
+                    }).catch((err) => {
+                        // Show user-friendly error message
+                        let errorMsg = 'Connection failed';
+                        if (err.message?.includes('DISCONNECTED') || err.type === 'network') {
+                            errorMsg = 'No internet connection';
+                        } else if (err.message?.includes('server')) {
+                            errorMsg = 'Server unavailable';
+                        }
+                        this.updateMPStatus(errorMsg + ' - try again', '');
+                        document.getElementById('mpButtons').style.display = 'flex';
+                    });
+                });
+            }
+            
+            // Join game button
+            if (joinBtn) {
+                joinBtn.addEventListener('click', () => {
+                    document.getElementById('mpCodeContainer').style.display = 'flex';
+                    document.getElementById('mpButtons').style.display = 'none';
+                });
+            }
+            
+            // Confirm join
+            if (confirmBtn && codeInput) {
+                confirmBtn.addEventListener('click', () => {
+                    const code = codeInput.value.trim().toUpperCase();
+                    if (code) {
+                        this.updateMPStatus('Connecting...', 'waiting');
+                        this.multiplayerManager.joinGame(code).then(() => {
+                            this.updateMPStatus('Connected!', 'connected');
+                        }).catch((err) => {
+                            let errorMsg = 'Connection failed';
+                            if (err.message?.includes('timeout')) {
+                                errorMsg = 'Game not found or timed out';
+                            } else if (err.message?.includes('DISCONNECTED')) {
+                                errorMsg = 'No internet connection';
+                            }
+                            this.updateMPStatus(errorMsg, '');
+                            document.getElementById('mpCodeContainer').style.display = 'none';
+                            document.getElementById('mpButtons').style.display = 'flex';
+                        });
+                    }
+                });
+            }
+            
+            // Copy code button
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    const code = document.getElementById('mpCodeDisplay').textContent;
+                    navigator.clipboard.writeText(code).catch(() => {});
+                    copyBtn.textContent = '✓';
+                    setTimeout(() => copyBtn.textContent = '📋', 1000);
+                });
+            }
+        }
+        
+        updateMPStatus(text, statusClass) {
+            const status = document.getElementById('mpStatus');
+            if (status) {
+                status.textContent = text;
+                status.className = 'mp-status' + (statusClass ? ' ' + statusClass : '');
+            }
+        }
+        
+        // ==================== BOSS MODE ====================
+        
+        updateBossHealthBar() {
+            if (!this.bossHealthFill || !this.bossManager.boss) return;
+            
+            const boss = this.bossManager.boss;
+            const healthPercent = (boss.health / boss.maxHealth) * 100;
+            this.bossHealthFill.style.width = healthPercent + '%';
+            
+            if (this.bossNameEl) {
+                this.bossNameEl.textContent = boss.type.toUpperCase();
+            }
+        }
+        
+        // ==================== GHOST/REPLAY MODE ====================
+        
+        loadBestReplay() {
+            const replayCode = localStorage.getItem('snakeBestReplay');
+            if (replayCode) {
+                this.ghostReplay = this.replayManager.importReplay(replayCode);
+            } else {
+                this.ghostReplay = null;
+            }
+        }
+        
+        saveBestReplay() {
+            const code = this.replayManager.exportReplay();
+            if (code) {
+                localStorage.setItem('snakeBestReplay', code);
+            }
+        }
+        
+        // ==================== POWER-UP UI ====================
+        
+        updatePowerUpBar() {
+            if (!this.powerUpBar) return;
+            
+            let html = '';
+            for (const id in this.powerUpManager.activeEffects) {
+                const effect = this.powerUpManager.activeEffects[id];
+                const remaining = Math.ceil(effect.endTime - performance.now()) / 1000;
+                html += `<div class="power-up-indicator" style="background: ${effect.type.color};">
+                    ${effect.type.symbol} ${remaining.toFixed(1)}s
+                </div>`;
+            }
+            this.powerUpBar.innerHTML = html;
+        }
+        // ==================== HIGH SCORE ====================
+        
+        loadHighScore() {
+            try {
+                const saved = localStorage.getItem('snakeHighScore');
+                return saved ? parseInt(saved, 10) : 0;
+            } catch (e) {
+                return 0;  // localStorage not available
+            }
+        }
+        
+        saveHighScore() {
+            try {
+                localStorage.setItem('snakeHighScore', this.highScore.toString());
+            } catch (e) {
+                // localStorage not available
+            }
+        }
+        
+        checkHighScore() {
+            if (this.gameState.score > this.highScore) {
+                this.highScore = this.gameState.score;
+                this.isNewHighScore = true;
+                this.saveHighScore();
+                this.updateHighScoreDisplay();
+                return true;
+            }
+            this.isNewHighScore = false;
+            return false;
+        }
+        
+        updateHighScoreDisplay() {
+            this.highScoreElement.textContent = this.highScore;
+        }
+        
+        // ==================== SOUND TOGGLE ====================
+        
+        initSoundToggle() {
+            this.soundToggle.addEventListener('click', () => this.toggleSound());
+        }
+        
+        toggleSound() {
+            const enabled = this.audio.toggle();
+            this.soundToggle.textContent = enabled ? '🔊' : '🔇';
+            this.soundToggle.classList.toggle('muted', !enabled);
+        }
+        
+        // ==================== UI UPDATES ====================
+        
+        updateComboDisplay() {
+            const combo = this.gameState.combo;
+            if (combo > 1) {
+                this.comboElement.textContent = `COMBO x${combo}`;
+                this.comboElement.classList.add('active');
+            } else {
+                this.comboElement.classList.remove('active');
+            }
+        }
+        
+        updateSpeedDisplay() {
+            this.speedElement.textContent = this.gameState.getSpeedLevel();
+        }
+        
+        // ==================== SCREEN SHAKE ====================
+        
+        triggerScreenShake() {
+            this.canvasWrapper.classList.add('shake');
+            setTimeout(() => {
+                this.canvasWrapper.classList.remove('shake');
+            }, 400);
+        }
+        
+        // ==================== COUNTDOWN ====================
+        
+        startCountdown() {
+            this.state = 'COUNTDOWN';
+            this.countdownValue = 3;
+            this.countdownTimer = 0;
+            this.countdownOverlay.style.display = 'flex';
+            this.countdownNumber.textContent = '3';
+            this.countdownNumber.className = 'countdown-number';
+            this.audio.playCountdown();
+            
+            // Start replay recording (pass game state if available)
+            try {
+                this.replayManager.startRecording(this.gameState);
+            } catch(e) {
+                console.warn('Could not start replay recording:', e);
+            }
+        }
+        
+        updateCountdown(deltaTime) {
+            this.countdownTimer += deltaTime;
+            
+            if (this.countdownTimer >= 800) {  // 800ms per count
+                this.countdownTimer = 0;
+                this.countdownValue--;
+                
+                if (this.countdownValue > 0) {
+                    this.countdownNumber.textContent = this.countdownValue.toString();
+                    // Re-trigger animation
+                    this.countdownNumber.className = '';
+                    void this.countdownNumber.offsetWidth;  // Force reflow
+                    this.countdownNumber.className = 'countdown-number';
+                    this.audio.playCountdown();
+                } else if (this.countdownValue === 0) {
+                    this.countdownNumber.textContent = 'GO!';
+                    this.countdownNumber.className = 'countdown-number go';
+                    this.audio.playGo();
+                } else {
+                    // Countdown finished
+                    this.countdownOverlay.style.display = 'none';
+                    this.state = 'PLAYING';
+                }
+            }
+        }
+        
+        /**
+         * Initialize difficulty selection buttons
+         */
+        initDifficultyButtons() {
+            const buttons = document.querySelectorAll('.difficulty-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const difficulty = e.target.dataset.difficulty;
+                    if (difficulty) {
+                        this.setDifficulty(difficulty);
+                    }
+                });
+            });
+        }
+        
+        /**
+         * Change game difficulty
+         * @param {string} level - 'easy', 'medium', 'hard', 'insane'
+         */
+        setDifficulty(level) {
+            // Update button UI
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.difficulty === level) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Update game state
+            this.gameState.setDifficulty(level);
+            
+            // If not currently playing, reset to apply new difficulty
+            if (this.state === 'GAME_OVER' || this.state === 'PAUSED') {
+                this.gameState.reset();
+                this.particles.clear();
+                this.input.clearBuffer();
+                this.accumulator = 0;
+                this.isNewHighScore = false;
+                this.updateScoreDisplay();
+                this.updateSpeedDisplay();
+                this.comboElement.classList.remove('active');
+                this.startCountdown();
+            } else if (this.state === 'BOOT') {
+                // Will apply on first play
+            } else {
+                // Reset mid-game with new difficulty
+                this.gameState.reset();
+                this.particles.clear();
+                this.input.clearBuffer();
+                this.accumulator = 0;
+                this.isNewHighScore = false;
+                this.updateScoreDisplay();
+                this.updateSpeedDisplay();
+                this.comboElement.classList.remove('active');
+            }
+        }
+
+        /**
+         * Toggle pause state
+         */
+        togglePause() {
+            if (this.state === 'PLAYING') {
+                this.state = 'PAUSED';
+                this.audio.playPause();
+            } else if (this.state === 'PAUSED') {
+                this.state = 'PLAYING';
+                this.audio.playPause();
+            }
+        }
+
+        /**
+         * Restart game
+         */
+        restart() {
+            if (this.state === 'GAME_OVER' || this.state === 'PAUSED') {
+                this.gameState.reset();
+                this.particles.clear();
+                this.input.clearBuffer();
+                this.powerUpManager.reset();
+                this.levelManager.reset();
+                this.accumulator = 0;
+                this.isNewHighScore = false;
+                
+                // Reset mode-specific state
+                this.timedModeTimer = (this.currentMode === 'timed') ? GameModes.timed.timeLimit : 0;
+                this.survivalWarningShown = false;
+                
+                // Reset for levels mode
+                if (this.currentMode === 'levels') {
+                    this.levelManager.loadLevel(0);
+                    this.gameState.spawnFood(this.levelManager);
+                    this.updateLevelDisplay();
+                }
+                
+                this.updateScoreDisplay();
+                this.updateSpeedDisplay();
+                this.updateTimerDisplay();
+                this.comboElement.classList.remove('active');
+                this.survivalWarning.style.display = 'none';
+                this.powerUpBar.innerHTML = '';
+                this.startCountdown();
+            }
+        }
+        
+        updateTimerDisplay() {
+            if (this.currentMode === 'timed' && this.timerDisplay) {
+                const seconds = Math.ceil(this.timedModeTimer / 1000);
+                this.timerDisplay.textContent = `⏱️ ${seconds}s`;
+            }
+        }
+        
+        updateLevelDisplay() {
+            if (this.levelDisplay) {
+                this.levelDisplay.textContent = `📍 ${this.levelManager.getLevelName()}`;
+            }
+        }
+
+        /**
+         * Update score display in DOM
+         */
+        updateScoreDisplay() {
+            this.scoreElement.textContent = this.gameState.score;
+        }
+
+        /**
+         * Process one game tick
+         */
+        tick() {
+            // Process buffered input
+            const newDir = this.input.consumeInput();
+            if (newDir) {
+                this.gameState.setDirection(newDir);
+                // Record input for replay
+                if (this.replayManager.isRecording) {
+                    this.replayManager.recordInput(newDir);
+                }
+            }
+            
+            // Store food position before update (for particles)
+            const foodPos = this.gameState.food ? {
+                x: this.gameState.food.x * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2,
+                y: this.gameState.food.y * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2
+            } : null;
+            
+            // Get occupied cells for power-up spawning
+            const levelManager = (this.currentMode === 'levels' || this.currentMode === 'survival') 
+                ? this.levelManager : null;
+            
+            // Update game state with managers
+            const result = this.gameState.update(levelManager, this.powerUpManager);
+            
+            // Update boss if in boss mode
+            if (this.currentMode === 'boss' && this.bossManager.boss) {
+                const head = this.gameState.snake[0];
+                const foodPos = this.gameState.food;
+                this.bossManager.update(16, head, foodPos, GameConfig.GRID_SIZE);
+                
+                // Check if boss hit player
+                if (this.bossManager.checkCollisionWithSnake(this.gameState.snake)) {
+                    // Player takes damage (boss hits = instant death for now)
+                    this.state = 'GAME_OVER';
+                    this.audio.playDeath();
+                    this.triggerScreenShake();
+                    this.checkHighScore();
+                    return;
+                }
+                
+                // Check if player hit boss (head collision)
+                if (this.bossManager.checkPlayerAttack(head)) {
+                    this.audio.playEat();
+                    this.updateBossHealthBar();
+                    this.particles.emit(
+                        head.x * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2,
+                        head.y * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2,
+                        '#ff4040', 20
+                    );
+                    
+                    // Boss defeated
+                    if (this.bossManager.boss.health <= 0) {
+                        this.gameState.score += 500; // Bonus for defeating boss
+                        this.updateScoreDisplay();
+                        // Spawn next boss or win
+                        this.bossManager.reset();
+                    }
+                }
+            }
+            
+            // Sync multiplayer state
+            if (this.currentMode === 'multiplayer' && this.multiplayerManager.isConnected) {
+                this.multiplayerManager.sendState(
+                    this.gameState.snake,
+                    this.gameState.score,
+                    this.gameState.direction
+                );
+            }
+            
+            // Check power-up collection
+            const head = this.gameState.snake[0];
+            const collectedPowerUp = this.powerUpManager.checkCollection(head.x, head.y);
+            if (collectedPowerUp) {
+                this.audio.playPowerUp();
+                this.particles.emit(
+                    head.x * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2,
+                    head.y * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2,
+                    collectedPowerUp.color, 15
+                );
+            }
+            
+            switch (result) {
+                case 'eat':
+                    // Maybe spawn power-up
+                    const occupiedCells = [...this.gameState.snake];
+                    if (this.gameState.food) occupiedCells.push(this.gameState.food);
+                    if (levelManager) {
+                        levelManager.getAllObstacles().forEach(w => occupiedCells.push(w));
+                    }
+                    this.powerUpManager.trySpawn(this.gameState.score, occupiedCells, GameConfig.GRID_SIZE);
+                    
+                    // Spawn particles at food position
+                    if (foodPos) {
+                        if (this.gameState.combo > 1) {
+                            this.particles.emitCombo(foodPos.x, foodPos.y, this.gameState.combo);
+                            this.audio.playCombo(this.gameState.combo);
+                        } else {
+                            this.particles.emit(foodPos.x, foodPos.y, '#ff0040', 8);
+                            this.audio.playEat();
+                        }
+                    }
+                    this.updateScoreDisplay();
+                    this.updateComboDisplay();
+                    this.updateSpeedDisplay();
+                    
+                    // Check for skin unlocks
+                    this.checkSkinUnlocks();
+                    break;
+                case 'levelup':
+                    this.audio.playLevelUp();
+                    this.particles.emitCombo(200, 200, 10);  // Big celebration
+                    this.updateLevelDisplay();
+                    break;
+                case 'portal':
+                    this.audio.playPortal();
+                    break;
+                case 'death':
+                    this.state = 'GAME_OVER';
+                    this.audio.playDeath();
+                    this.triggerScreenShake();
+                    this.checkHighScore();
+                    
+                    // Save replay if it's a new high score
+                    if (this.isNewHighScore) {
+                        this.replayManager.stopRecording();
+                        this.saveBestReplay();
+                    }
+                    break;
+                case 'win':
+                    // Rare edge case: player filled entire grid!
+                    this.state = 'GAME_OVER';
+                    this.checkHighScore();
+                    break;
+            }
+        }
+
+        /**
+         * Main game loop with fixed timestep for deterministic logic.
+         * 
+         * WHY FIXED TIMESTEP?
+         * Variable timesteps cause movement speed to vary with frame rate.
+         * On a 144Hz monitor the snake would move faster than on 60Hz.
+         * Fixed timestep decouples logic updates from render frequency.
+         * 
+         * The accumulator stores "leftover" time between frames, ensuring
+         * logic ticks happen at consistent intervals regardless of actual
+         * frame timing.
+         */
+        loop(currentTime) {
+            const deltaTime = currentTime - this.lastTime;
+            this.lastTime = currentTime;
+            
+            // Handle boot screen
+            if (this.state === 'BOOT') {
+                const bootProgress = (currentTime - this.bootStartTime) / GameConfig.BOOT_DURATION;
+                
+                if (bootProgress >= 1) {
+                    this.startCountdown();
+                } else {
+                    this.renderer.drawBootScreen(bootProgress);
+                }
+                
+                this.animationId = requestAnimationFrame((t) => this.loop(t));
+                return;
+            }
+            
+            // Handle countdown
+            if (this.state === 'COUNTDOWN') {
+                this.updateCountdown(deltaTime);
+                this.renderWithExtras(deltaTime);
+                this.animationId = requestAnimationFrame((t) => this.loop(t));
+                return;
+            }
+            
+            // Update particles
+            this.particles.update(deltaTime);
+            
+            // Update power-ups
+            this.powerUpManager.update();
+            this.updatePowerUpBar();
+            
+            // Update combo timer
+            if (this.state === 'PLAYING') {
+                this.gameState.updateCombo(deltaTime);
+                
+                // Check if combo expired and update UI
+                if (this.gameState.combo === 0) {
+                    this.comboElement.classList.remove('active');
+                }
+                
+                // Handle timed mode
+                if (this.currentMode === 'timed') {
+                    this.timedModeTimer -= deltaTime;
+                    this.updateTimerDisplay();
+                    
+                    if (this.timedModeTimer <= 0) {
+                        // Time's up!
+                        this.state = 'GAME_OVER';
+                        this.audio.playDeath();
+                        this.checkHighScore();
+                    }
+                }
+                
+                // Handle survival mode - walls close in
+                if (this.currentMode === 'survival') {
+                    const wallsAdded = this.levelManager.updateSurvivalWalls(deltaTime, GameConfig.GRID_SIZE);
+                    if (wallsAdded && !this.survivalWarningShown) {
+                        this.survivalWarning.style.display = 'block';
+                        this.survivalWarningShown = true;
+                        setTimeout(() => {
+                            this.survivalWarning.style.display = 'none';
+                        }, 2000);
+                    }
+                }
+            }
+            
+            // Fixed timestep updates (only when playing)
+            if (this.state === 'PLAYING') {
+                // Use modified speed from power-ups
+                const moveInterval = this.gameState.getMoveInterval(this.powerUpManager);
+                this.accumulator += deltaTime;
+                
+                // Process ticks at fixed interval
+                while (this.accumulator >= moveInterval) {
+                    this.tick();
+                    this.accumulator -= moveInterval;
+                    
+                    // Break if game ended during tick
+                    if (this.state !== 'PLAYING') break;
+                }
+            }
+            
+            // Render current state with all extras
+            this.renderWithExtras(deltaTime);
+            
+            // Continue loop
+            this.animationId = requestAnimationFrame((t) => this.loop(t));
+        }
+        
+        /**
+         * Enhanced render that includes walls, portals, power-ups
+         */
+        renderWithExtras(deltaTime) {
+            this.renderer.drawBackground();
+            
+            // Draw level elements
+            const levelManager = (this.currentMode === 'levels' || this.currentMode === 'survival') 
+                ? this.levelManager : null;
+            
+            if (levelManager) {
+                this.renderer.drawWalls(levelManager.getAllObstacles());
+                this.renderer.drawPortals(levelManager.portals, deltaTime);
+            }
+            
+            // Draw power-up
+            this.renderer.drawPowerUp(this.powerUpManager.activePowerUp, deltaTime);
+            
+            // Draw food
+            this.renderer.drawFood(this.gameState.food, deltaTime);
+            
+            // Draw ghost replay snake (behind player)
+            if (this.isGhostMode && this.ghostReplay && this.ghostReplay.ghostSnake) {
+                this.renderer.drawGhostSnake(this.ghostReplay.ghostSnake);
+            }
+            
+            // Draw boss snake
+            if (this.currentMode === 'boss' && this.bossManager.boss) {
+                this.renderer.drawBossSnake(this.bossManager.boss);
+            }
+            
+            // Draw snake with effects
+            const isGhost = this.powerUpManager.hasEffect('ghost');
+            if (isGhost) {
+                this.renderer.drawSnakeWithEffects(this.gameState.snake, true);
+            } else {
+                this.renderer.drawSnake(this.gameState.snake, this.currentSkin);
+            }
+            
+            // Render particles on top
+            this.particles.render(this.renderer.ctx);
+            
+            // Draw overlays
+            if (this.state === 'PAUSED') {
+                this.renderer.drawTextOverlay('PAUSED', 'Press SPACE to continue');
+            } else if (this.state === 'GAME_OVER') {
+                const diffName = this.gameState.difficulty.name;
+                const modeInfo = this.currentMode !== 'classic' ? ` | ${GameModes[this.currentMode].name}` : '';
+                const title = this.isNewHighScore ? 'NEW HIGH SCORE!' : 'GAME OVER';
+                const color = this.isNewHighScore ? this.renderer.colors.ACCENT : this.renderer.colors.FOOD;
+                this.renderer.drawTextOverlay(
+                    title,
+                    `${diffName}${modeInfo} | Score: ${this.gameState.score} | Press ENTER`,
+                    color
+                );
+            }
+        }
+
+        /**
+         * Cleanup method for proper resource disposal
+         */
+        destroy() {
+            if (this.animationId) {
+                cancelAnimationFrame(this.animationId);
+            }
+            this.input.destroy();
+        }
+    }
+
+    // ==========================================================================
+    // INITIALIZATION
+    // ==========================================================================
+    
+    // Expose game instance for debugging (optional)
+    let game;
+    
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            game = new Game();
+        });
+    } else {
+        game = new Game();
+    }
+
+    /**
+     * ============================================================================
+     * FUTURE ENHANCEMENT SUGGESTIONS
+     * ============================================================================
+     * 
+     * 1. MULTIPLAYER
+     *    - Local two-player split screen mode
+     *    - Online multiplayer via WebSocket
+     *    - Battle royale with multiple snakes
+     * 
+     * 2. ACHIEVEMENTS SYSTEM
+     *    - Unlock badges (First 100 points, 10 combo streak, etc.)
+     *    - Track statistics (games played, total food eaten, time played)
+     *    - Achievement notifications with animations
+     * 
+     * 3. CUSTOM SNAKE SKINS
+     *    - Unlockable snake patterns (stripes, gradient, rainbow)
+     *    - Head styles (arrow, round, pixel art)
+     *    - Trail effects (sparkles, flames, fade)
+     * 
+     * 4. ONLINE LEADERBOARD
+     *    - Global high scores via REST API
+     *    - Weekly/monthly competitions
+     *    - Friend leaderboards
+     * 
+     * 5. LEVEL EDITOR
+     *    - Create custom obstacle layouts
+     *    - Share levels via URL/code
+     *    - Community level voting
+     * 
+     * 6. ADVANCED POWER-UPS
+     *    - Magnet (food attracted to snake)
+     *    - Shield (one-time collision protection)
+     *    - Shrink (reduce snake length)
+     *    - Freeze (pause time briefly)
+     * 
+     * 7. BOSS BATTLES
+     *    - Special enemy snakes with AI
+     *    - Boss patterns to memorize
+     *    - Rewards for defeating bosses
+     * 
+     * 8. AUDIO ENHANCEMENTS
+     *    - Background music tracks (toggleable)
+     *    - Dynamic music that speeds up with game
+     *    - Haptic feedback on mobile devices
+     * 
+     * 9. REPLAY SYSTEM
+     *    - Record and playback best runs
+     *    - Share replays as video/GIF
+     *    - Ghost mode (race against your best)
+     * 
+     * 10. DAILY CHALLENGES
+     *     - Unique challenge each day
+     *     - Special rewards for completion
+     *     - Streak bonuses for consecutive days
+     */
+    </script>
+</body>
+</html>
