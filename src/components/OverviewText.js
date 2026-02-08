@@ -1,29 +1,33 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { useData } from "../context/DataContext";
 import "../styles/Overview.scss";
 
+/**
+ * OverviewText
+ *
+ * Displays job title, experience, location, and email
+ * on the home page. Data from DataContext (Firestore / fallback).
+ */
 function OverviewText() {
-  useEffect(() => {
-    setTimeout(() => {
-      document.getElementById("my-name").classList.add("is-mounted");
-    }, 1000 * 1);
-    return () => {
-      document.getElementById("my-name").classList.remove("is-mounted");
-    };
-  }, []);
+  const { data } = useData();
+  const { settings, contact } = data;
+
+  const openEmail = () => {
+    if (contact.email) window.open(`mailto:${contact.email}`);
+  };
 
   return (
-    <div>
-      <div id="my-name" className="overview-name">
-        KritiKalpa Saha
-      </div>
+    <div className="overview-text">
       <div className="overview-details">
         <div>
-          <div>Frontend Developer</div>
-          <div>6 Years Experience</div>
+          <div>{settings?.job_title || "Laravel Developer"}</div>
+          <div>{settings?.years_of_experience ? `${settings.years_of_experience} Years Experience` : "3 Years Experience"}</div>
         </div>
         <div className="overview-location">
-          <div>Tripura, INDIA</div>
-          <div>saha.kritikalpa@gmail.com</div>
+          <div>{settings?.current_location || contact.location || "Gujarat, INDIA"}</div>
+          <button className="overview-location-email" onClick={openEmail}>
+            <strong>{contact.email || "ashishvala2004@gmail.com"}</strong>
+          </button>
         </div>
       </div>
     </div>

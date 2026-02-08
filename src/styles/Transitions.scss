@@ -1,0 +1,33 @@
+@use "../variables" as v;
+
+/* =========================
+   GLOBAL TRANSITION STYLES
+========================= */
+
+/* Prevent scrollbar flash during page transitions */
+.router-container {
+  overflow: hidden;
+}
+
+/* All page wrappers during transition */
+.page-transition-wrapper {
+  will-change: transform, opacity;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Body overflow control — added via JS during transition */
+body.is-transitioning {
+  overflow: hidden;
+}
+
+/* =========================
+   REDUCED MOTION
+========================= */
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-wrapper {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

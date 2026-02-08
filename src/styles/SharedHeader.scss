@@ -1,0 +1,176 @@
+@use "../variables" as v;
+
+/* =========================
+   SHARED HEADER — BAR
+========================= */
+
+.shared-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: v.$header-height;
+    z-index: 10000;
+    pointer-events: none;
+
+    &--home {
+        pointer-events: none;
+    }
+
+    &--page {
+        pointer-events: auto;
+    }
+}
+
+.shared-header__bar {
+    position: absolute;
+    inset: 0;
+    background-color: transparent;
+    border: none;
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.shared-header__logo {
+    font-family: v.$primary-font;
+    color: v.$white;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    position: fixed;
+    white-space: nowrap;
+    transition: font-size 0.5s v.$slide-ease, color 0.5s;
+
+    &:hover {
+        color: transparent;
+    }
+
+    /* Home position: bottom-left, ABOVE the info row */
+    &--home {
+        bottom: calc(3vw + 55px);
+        left: 4vw;
+        top: auto;
+        font-size: 40px;
+    }
+
+    /* Page position: top-left in header */
+    &--page {
+        top: 0;
+        left: 30px;
+        bottom: auto;
+        font-size: 22px;
+        line-height: v.$header-height;
+    }
+}
+
+/* Outlined text stroke for logo */
+@supports (-webkit-text-stroke: 1px v.$white) or (text-stroke: 1px v.$white) {
+    .shared-header__logo {
+        -webkit-text-stroke: 1px v.$white;
+    }
+}
+
+/* =========================
+   NAV LINKS
+========================= */
+
+.shared-header__nav {
+    position: fixed;
+    display: flex;
+    gap: 0;
+
+    /* Home position: bottom-right area, same row as details */
+    &--home {
+        bottom: 3vw;
+        right: 5vw;
+        left: auto;
+        top: auto;
+        flex-direction: row;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    /* Page position: top header, horizontal */
+    &--page {
+        top: 0;
+        left: 180px;
+        right: auto;
+        bottom: auto;
+        flex-direction: row;
+        gap: 0;
+        height: v.$header-height;
+        align-items: center;
+    }
+}
+
+.shared-header__nav-item {
+    background: transparent;
+    border: none;
+    color: v.$white;
+    font-family: v.$secondery-font;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 16px;
+    text-transform: lowercase;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+.shared-header__nav-num {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.6;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+    .shared-header__logo {
+        &--home {
+            bottom: calc(6vw + 45px);
+            left: 6vw;
+            font-size: 28px;
+        }
+
+        &--page {
+            font-size: 18px;
+            left: 20px;
+        }
+    }
+
+    .shared-header__nav {
+        &--home {
+            right: 6vw;
+            bottom: 6vw;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            max-width: 50vw;
+        }
+
+        &--page {
+            left: 140px;
+        }
+    }
+
+    .shared-header__nav-item {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .shared-header__nav-num {
+        font-size: 10px;
+    }
+}

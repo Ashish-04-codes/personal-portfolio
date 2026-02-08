@@ -1,0 +1,22 @@
+[
+    {
+        "id": "about",
+        "name": "About Me",
+        "path": "/about"
+    },
+    {
+        "id": "experience",
+        "name": "Experience",
+        "path": "/experience"
+    },
+    {
+        "id": "projects",
+        "name": "Projects",
+        "path": "/projects"
+    },
+    {
+        "id": "contact",
+        "name": "Contact Me",
+        "path": "/contact"
+    }
+]

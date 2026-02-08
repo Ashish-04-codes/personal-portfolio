@@ -1,26 +1,15 @@
-import React from "react";
-import "../styles/Overview.scss"
-import Resume from "../resume.pdf";
-
+/**
+ * OverviewLinks
+ *
+ * Previously rendered social links on the home page.
+ * Those links have moved into SharedHeader (with layoutId animation).
+ * 
+ * This component is kept as a placeholder for any additional
+ * home-page-only content that sits alongside OverviewText.
+ * Can be safely removed if not needed.
+ */
 function OverviewLinks() {
-  const handleDownload = () => {
-    window.open(Resume);
-  };
-  const openLinkedIn = () => {
-    window.open("https://www.linkedin.com/in/kritikalpa-saha/");
-  };
-  return (
-    <div className="overview-links">
-      <div className="overview-links-item" onClick={handleDownload}>
-        <div>01</div>
-        <div>resume</div>
-      </div>
-      <div className="overview-links-item" onClick={openLinkedIn}>
-        <div>02</div>
-        <div>linkedin</div>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 export default OverviewLinks;

@@ -1,0 +1,155 @@
+@use "../variables" as v;
+
+/* =========================
+   PAGE LAYOUT
+========================= */
+
+.page-layout {
+    min-height: 100vh;
+    background-color: v.$primary-bg;
+    color: v.$white;
+    font-family: v.$secondery-font;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* =========================
+   LARGE OUTLINED TITLE
+   Positioned top-right as a decorative element.
+   Each word stacks vertically, right-aligned.
+   Does NOT overlap the left-side content area.
+========================= */
+
+.page-layout__title-wrapper {
+    position: absolute;
+    top: v.$header-height;
+    right: v.$page-padding-x;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+    padding-top: 10px;
+    overflow: visible;
+}
+
+.page-layout__title {
+    font-family: v.$primary-font;
+    font-size: clamp(60px, 10vw, 160px);
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: transparent;
+    pointer-events: none;
+
+    /* Outlined text */
+    -webkit-text-stroke: 2px rgba(v.$white, 0.3);
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/* Each word on its own line, right-aligned (staircase effect).
+   width: max-content so element width = text width (for accurate measurement).
+   margin-left: auto pushes it to the right.
+   transform-origin: right so scaleX shrinks from the right edge. */
+.page-layout__title-word {
+    display: block;
+    white-space: nowrap;
+    width: max-content;
+    margin-left: auto;
+    transform-origin: right center;
+}
+
+/* =========================
+   CONTENT AREA
+   Starts directly below the navbar, overlapping the outlined title
+========================= */
+
+.page-layout__content {
+    padding: calc(v.$header-height + 30px) v.$page-padding-x 40px;
+    max-width: 900px;
+    position: relative;
+    z-index: 3;
+}
+
+/* =========================
+   NEXT PROJECT LINK
+========================= */
+
+.next-project {
+    padding: 80px v.$page-padding-x 60px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-top: 1px solid rgba(v.$white, 0.1);
+    transition: background-color 0.3s;
+
+    &:hover {
+        background-color: rgba(v.$white, 0.03);
+
+        .next-project__name {
+            color: transparent;
+        }
+
+        .next-project__arrow {
+            transform: translateX(10px);
+        }
+    }
+}
+
+.next-project__label {
+    font-family: v.$secondery-font;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.6;
+}
+
+.next-project__name {
+    font-family: v.$primary-font;
+    font-size: clamp(28px, 5vw, 64px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: color 0.5s;
+    color: v.$white;
+}
+
+/* Outlined text stroke for next project name */
+@supports (-webkit-text-stroke: 2px v.$white) or (text-stroke: 2px v.$white) {
+    .next-project__name {
+        -webkit-text-stroke: 2px v.$white;
+    }
+}
+
+.next-project__arrow {
+    font-size: 32px;
+    transition: transform 0.3s ease;
+    margin-left: auto;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+    .page-layout__title {
+        font-size: clamp(36px, 12vw, 80px);
+        padding-right: v.$page-padding-x-mobile;
+    }
+
+    .page-layout__content {
+        padding: calc(v.$header-height + 20px) v.$page-padding-x-mobile 30px;
+    }
+
+    .next-project {
+        padding: 50px v.$page-padding-x-mobile 40px;
+        flex-wrap: wrap;
+    }
+
+    .next-project__name {
+        font-size: clamp(24px, 8vw, 40px);
+    }
+}
